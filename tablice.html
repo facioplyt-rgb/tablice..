@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Generator Tablic Autobusowych</title>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-top: 10px;
+            color: #f1c40f;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .controls {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-end;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        input[type="text"], input[type="color"] {
+            background-color: #2c2c2c;
+            color: white;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input[type="color"] {
+            height: 45px;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        button {
+            background-color: #d35400;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #e67e22;
+        }
+
+        .canvas-container {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+        }
+
+        .canvas-container::after {
+            content: "Kliknij tablicę, aby powiększyć do zrzutu ekranu";
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            color: #ddd;
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 15px;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        canvas {
+            background-color: #000;
+            border: 4px solid #1a1a1a;
+            border-radius: 0px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            width: 100%; 
+            height: auto; 
+            aspect-ratio: 4 / 1; 
+            display: block;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .close-modal {
+            background: #c0392b;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            align-self: flex-end;
+            width: auto;
+        }
+
+        .modal-hint {
+            margin-top: 20px;
+            color: #aaa;
+            font-size: 13px;
+            text-align: center;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Generator Tablic LED</h1>
+
+    <div class="controls">
+        <div class="input-group">
+            <label for="lineInput">Linia (max 3 cyfry):</label>
+            <input type="text" id="lineInput" value="123" maxlength="3">
+        </div>
+        <div class="input-group" style="flex: 2;">
+            <label for="destInput">Kierunek:</label>
+            <input type="text" id="destInput" value="DWORZEC GŁÓWNY">
+        </div>
+        <div class="input-group" style="min-width: 60px; flex: 0.5;">
+            <label for="colorInput">Kolor:</label>
+            <input type="color" id="colorInput" value="#ff9900">
+        </div>
+        <button onclick="downloadImage()">Pobierz jako PNG</button>
+    </div>
+
+    <!-- Główna tablica o wymiarach 1000x250 -->
+    <div class="canvas-container" onclick="openModal()">
+        <canvas id="boardCanvas" width="1000" height="250"></canvas>
+    </div>
+
+    <!-- Okno modalne -->
+    <div id="modalOverlay" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-modal" onclick="closeModal()">Zamknij X</button>
+            <canvas id="modalCanvas" width="1000" height="250"></canvas>
+            <div class="modal-hint">Zrób zrzut ekranu (PrintScreen).<br>Kliknij X lub w tło, aby zamknąć.</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('boardCanvas');
+        const ctx = canvas.getContext('2d');
+        const modalCanvas = document.getElementById('modalCanvas');
+        const modalCtx = modalCanvas.getContext('2d');
+        const modalOverlay = document.getElementById('modalOverlay');
+
+        const lineInput = document.getElementById('lineInput');
+        const destInput = document.getElementById('destInput');
+        const colorInput = document.getElementById('colorInput');
+
+        let lastValidLineText = lineInput.value;
+        let lastValidDestText = destInput.value;
+
+        const CANVAS_WIDTH = 1000;
+        const CANVAS_HEIGHT = 250;
+
+        const maxLineWidth = 200; 
+        const maxDestWidth = 720; 
+
+        function drawToContext(targetCtx) {
+            const lineText = lineInput.value;
+            const destText = destInput.value.toUpperCase();
+            const ledColor = colorInput.value;
+
+            // 1. Czarne tło
+            targetCtx.fillStyle = '#0a0a0a';
+            targetCtx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // 2. Efekt "Glow"
+            targetCtx.fillStyle = ledColor;
+            targetCtx.shadowColor = ledColor;
+            targetCtx.shadowBlur = 15; 
+            targetCtx.textBaseline = 'middle';
+
+            // NUMER LINII: Zmniejszona czcionka do 110px (taka sama jak kierunek)
+            targetCtx.font = 'bold 110px "DotGothic16", monospace';
+            targetCtx.textAlign = 'center';
+            targetCtx.fillText(lineText, 110, CANVAS_HEIGHT / 2 + 5);
+
+            // KIERUNEK: Czcionka 110px
+            targetCtx.font = '110px "DotGothic16", monospace';
+            targetCtx.textAlign = 'center'; 
+            targetCtx.fillText(destText, 580, CANVAS_HEIGHT / 2 + 5);
+
+            // 3. Rysowanie siatki
+            targetCtx.shadowBlur = 0;
+            targetCtx.fillStyle = '#000000';
+
+            const dotSize = 5;
+            const gap = 2;
+            const step = dotSize + gap;
+
+            for (let y = 0; y < CANVAS_HEIGHT; y += step) {
+                targetCtx.fillRect(0, y, CANVAS_WIDTH, gap);
+            }
+            for (let x = 0; x < CANVAS_WIDTH; x += step) {
+                targetCtx.fillRect(x, 0, gap, CANVAS_HEIGHT);
+            }
+        }
+
+        function drawBoard() {
+            drawToContext(ctx);
+            drawToContext(modalCtx);
+        }
+
+        // Limit dla 3 cyfr i dostosowana miara mniejszej czcionki
+        lineInput.addEventListener('input', function() {
+            if (lineInput.value.length > 3) {
+                lineInput.value = lineInput.value.substring(0, 3);
+            }
+
+            ctx.font = 'bold 110px "DotGothic16", monospace';
+            if (ctx.measureText(lineInput.value).width > maxLineWidth) {
+                lineInput.value = lastValidLineText;
+            } else {
+                lastValidLineText = lineInput.value;
+                drawBoard();
+            }
+        });
+
+        destInput.addEventListener('input', function() {
+            ctx.font = '110px "DotGothic16", monospace';
+            if (ctx.measureText(destInput.value.toUpperCase()).width > maxDestWidth) {
+                destInput.value = lastValidDestText;
+            } else {
+                lastValidDestText = destInput.value;
+                drawBoard();
+            }
+        });
+
+        colorInput.addEventListener('input', drawBoard);
+
+        function openModal() {
+            modalOverlay.style.display = 'flex';
+            drawToContext(modalCtx);
+        }
+
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+        }
+
+        function downloadImage() {
+            canvas.toBlob(function(blob) {
+                if (!blob) return alert("Błąd generowania obrazu.");
+                
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                
+                const safeLine = lineInput.value.replace(/[^a-zA-Z0-9]/g, '');
+                const safeDest = destInput.value.replace(/[^a-zA-Z0-9\sąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, '').trim().replace(/\s+/g, '_');
+                
+                link.download = `tablica_${safeLine}_${safeDest}.png`;
+                link.href = url;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+
+        document.fonts.ready.then(() => {
+            drawBoard();
+        });
+        
+        drawBoard();
+    </script>
+</body>
+</html>
