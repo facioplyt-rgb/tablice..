@@ -1,10 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Generator Tablic Informacyjnych</title>
-    <!-- Czcionka dla tablicy autobusowej -->
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
     <style>
         body {
@@ -26,13 +26,13 @@
             text-align: center;
         }
 
-        /* --- WYBÓR TRYBU --- */
+        /* --- WYBÓR GŁÓWNEGO TRYBU --- */
         .mode-selector {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
         }
 
         .mode-btn {
@@ -61,6 +61,35 @@
             border-color: #2b74c2;
         }
 
+        /* --- PODKATEGORIE AUTOBUSÓW --- */
+        .sub-mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .sub-mode-btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            background-color: #1e1e1e;
+            color: #888;
+            border: 1px solid #444;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-mode-btn.active {
+            background-color: #e67e22;
+            color: white;
+            border-color: #d35400;
+        }
+
         /* --- KONTROLKI --- */
         .controls-container {
             background-color: #1e1e1e;
@@ -69,7 +98,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             margin-bottom: 20px;
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
             box-sizing: border-box;
         }
 
@@ -117,6 +146,27 @@
             height: 45px;
             padding: 2px;
             cursor: pointer;
+        }
+
+        /* Specjalne rzędy dla SIP */
+        .sip-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .sip-l { flex: 0.5; text-align: center; font-weight: bold; }
+        .sip-d { flex: 2; }
+        .sip-t { flex: 1; text-align: right; }
+        
+        .section-title {
+            width: 100%;
+            font-size: 14px;
+            color: #e67e22;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+            margin-top: 10px;
+            margin-bottom: 5px;
         }
 
         button.download-btn {
@@ -218,17 +268,23 @@
 
     <h1>Generator Tablic Informacyjnych</h1>
 
-    <!-- Przyciski wyboru trybu -->
+    <!-- Główne kategorie -->
     <div class="mode-selector">
-        <div class="mode-btn active-bus" id="btnBus" onclick="setMode('bus')">🚌 Autobus (LED)</div>
-        <div class="mode-btn" id="btnTrain" onclick="setMode('train')">🚆 Kolej (PKP)</div>
+        <div class="mode-btn active-bus" id="btnBus" onclick="setMainMode('bus')">🚌 Autobus</div>
+        <div class="mode-btn" id="btnTrain" onclick="setMainMode('train')">🚆 Kolej (PKP)</div>
+    </div>
+
+    <!-- Podkategorie dla autobusów -->
+    <div class="sub-mode-selector" id="subModeBus">
+        <div class="sub-mode-btn active" id="btnBusDir" onclick="setSubMode('dir')">Tablica Kierunkowa (Pojazd)</div>
+        <div class="sub-mode-btn" id="btnBusSip" onclick="setSubMode('sip')">System Informacji Dynamicznej (Przystanek)</div>
     </div>
 
     <!-- Kontrolki -->
     <div class="controls-container">
         
-        <!-- Formularz Autobusowy -->
-        <div id="controlsBus" class="controls">
+        <!-- 1. Tablica Kierunkowa Autobusu (Klasyczna LED) -->
+        <div id="controlsBusDir" class="controls">
             <div class="input-group">
                 <label for="lineInput">Linia (max 3 cyfry):</label>
                 <input type="text" id="lineInput" value="123" maxlength="3">
@@ -243,7 +299,50 @@
             </div>
         </div>
 
-        <!-- Formularz Kolejowy -->
+        <!-- 2. System Informacji Pasażerskiej (Przystanek) -->
+        <div id="controlsBusSip" class="controls" style="display: none;">
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <div class="input-group" style="flex: 2;">
+                    <label>Nazwa przystanku:</label>
+                    <input type="text" id="sipStopName" value="Fieldorfa-Nila">
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>Zegar:</label>
+                    <input type="text" id="sipTime" value="05:53">
+                </div>
+            </div>
+            
+            <div class="section-title">Odjazdy:</div>
+            
+            <!-- 4 rzędy odjazdów -->
+            <div class="sip-row">
+                <input type="text" id="sipL1" value="1" class="sip-l" placeholder="Linia">
+                <input type="text" id="sipD1" value="Wieprzyce PKP" class="sip-d" placeholder="Kierunek">
+                <input type="text" id="sipT1" value="5 min" class="sip-t" placeholder="Czas">
+            </div>
+            <div class="sip-row">
+                <input type="text" id="sipL2" value="4" class="sip-l">
+                <input type="text" id="sipD2" value="Dworzec Główny" class="sip-d">
+                <input type="text" id="sipT2" value="9 min" class="sip-t">
+            </div>
+            <div class="sip-row">
+                <input type="text" id="sipL3" value="3" class="sip-l">
+                <input type="text" id="sipD3" value="Piaski" class="sip-d">
+                <input type="text" id="sipT3" value="13 min" class="sip-t">
+            </div>
+            <div class="sip-row">
+                <input type="text" id="sipL4" value="1" class="sip-l">
+                <input type="text" id="sipD4" value="Wieprzyce PKP" class="sip-d">
+                <input type="text" id="sipT4" value="25 min" class="sip-t">
+            </div>
+
+            <div class="input-group">
+                <label>Pasek informacyjny (Dół):</label>
+                <input type="text" id="sipTicker" value="Jakość powietrza bardzo dobra =)">
+            </div>
+        </div>
+
+        <!-- 3. Tablica Kolejowa -->
         <div id="controlsTrain" class="controls" style="display: none;">
             <div style="display: flex; gap: 15px; width: 100%;">
                 <div class="input-group" style="flex: 1;">
@@ -291,61 +390,60 @@
     </div>
 
     <script>
-        // Inicjalizacja Płócien
         const canvas = document.getElementById('boardCanvas');
         const ctx = canvas.getContext('2d');
         const modalCanvas = document.getElementById('modalCanvas');
         const modalCtx = modalCanvas.getContext('2d');
         const modalOverlay = document.getElementById('modalOverlay');
 
-        // Zmienna trybu pracy
-        let currentMode = 'bus'; // 'bus' lub 'train'
+        let currentMainMode = 'bus'; 
+        let currentSubMode = 'dir'; 
 
-        // Pobieranie elementów DOM (Autobus)
-        const lineInput = document.getElementById('lineInput');
-        const destInputBus = document.getElementById('destInputBus');
-        const colorInput = document.getElementById('colorInput');
-        
-        // Pobieranie elementów DOM (Kolej)
-        const timeInput = document.getElementById('timeInput');
-        const destInputTrain = document.getElementById('destInputTrain');
-        const viaInput = document.getElementById('viaInput');
-        const operatorInput = document.getElementById('operatorInput');
-        const trainNameInput = document.getElementById('trainNameInput');
-
-        let lastValidLineText = lineInput.value;
-
-        // Funkcja przełączająca tryb
-        function setMode(mode) {
-            currentMode = mode;
-            
-            // Stylizacja przycisków
+        // Funkcje Przełączania Trybów
+        function setMainMode(mode) {
+            currentMainMode = mode;
             document.getElementById('btnBus').className = mode === 'bus' ? 'mode-btn active-bus' : 'mode-btn';
             document.getElementById('btnTrain').className = mode === 'train' ? 'mode-btn active-train' : 'mode-btn';
+            document.getElementById('subModeBus').style.display = mode === 'bus' ? 'flex' : 'none';
+            updateUI();
+        }
 
-            // Pokaż/Ukryj formularze
-            document.getElementById('controlsBus').style.display = mode === 'bus' ? 'flex' : 'none';
-            document.getElementById('controlsTrain').style.display = mode === 'train' ? 'flex' : 'none';
+        function setSubMode(mode) {
+            currentSubMode = mode;
+            document.getElementById('btnBusDir').className = mode === 'dir' ? 'sub-mode-btn active' : 'sub-mode-btn';
+            document.getElementById('btnBusSip').className = mode === 'sip' ? 'sub-mode-btn active' : 'sub-mode-btn';
+            updateUI();
+        }
 
-            // Dostosowanie rozmiarów płótna
-            if (mode === 'bus') {
-                canvas.width = 1000; canvas.height = 250;
-                canvas.style.aspectRatio = "4 / 1";
-                modalCanvas.width = 1000; modalCanvas.height = 250;
-                modalCanvas.style.aspectRatio = "4 / 1";
+        function updateUI() {
+            // Ukryj wszystkie
+            document.getElementById('controlsBusDir').style.display = 'none';
+            document.getElementById('controlsBusSip').style.display = 'none';
+            document.getElementById('controlsTrain').style.display = 'none';
+
+            let targetRatio, w, h;
+
+            if (currentMainMode === 'train') {
+                document.getElementById('controlsTrain').style.display = 'flex';
+                w = 1000; h = 500; targetRatio = "2 / 1";
             } else {
-                canvas.width = 1000; canvas.height = 500;
-                canvas.style.aspectRatio = "2 / 1";
-                modalCanvas.width = 1000; modalCanvas.height = 500;
-                modalCanvas.style.aspectRatio = "2 / 1";
+                if (currentSubMode === 'dir') {
+                    document.getElementById('controlsBusDir').style.display = 'flex';
+                    w = 1000; h = 250; targetRatio = "4 / 1";
+                } else {
+                    document.getElementById('controlsBusSip').style.display = 'flex';
+                    w = 1000; h = 580; targetRatio = "1000 / 580";
+                }
             }
-            
+
+            canvas.width = w; canvas.height = h; canvas.style.aspectRatio = targetRatio;
+            modalCanvas.width = w; modalCanvas.height = h; modalCanvas.style.aspectRatio = targetRatio;
             drawBoard();
         }
 
-        // Funkcja pomocnicza do zawijania tekstu (Kolej)
+        // Pomocnicze zawijanie tekstu dla PKP
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
-            const words = text.split(/(?=[,\s])/); // dzieli po spacjach i przecinkach, zachowując je
+            const words = text.split(/(?=[,\s])/); 
             let line = '';
             for (let n = 0; n < words.length; n++) {
                 let testLine = line + words[n];
@@ -362,33 +460,63 @@
             context.fillText(line.trim(), x, y);
         }
 
-        // Główna funkcja rysująca
+        // Rysowanie na płótnie
         function drawToContext(targetCtx) {
-            if (currentMode === 'bus') {
-                // --- TRYB: AUTOBUS ---
-                const lineText = lineInput.value;
-                const destText = destInputBus.value.toUpperCase();
-                const ledColor = colorInput.value;
+            if (currentMainMode === 'train') {
+                // --- TRYB: KOLEJ (PKP) ---
+                
+                // Prawe, jaśniejsze tło
+                targetCtx.fillStyle = '#1e5088';
+                targetCtx.fillRect(0, 0, 1000, 500);
 
-                // Tło
+                // Lewe, ciemniejsze tło (Nowość!)
+                targetCtx.fillStyle = '#11355e';
+                targetCtx.fillRect(0, 0, 260, 500);
+                
+                targetCtx.shadowBlur = 0; 
+                targetCtx.fillStyle = '#ffffff';
+                targetCtx.fillRect(260, 20, 3, 460); // Pionowa biała linia
+                targetCtx.textBaseline = 'top';
+
+                // --- LEWA KOLUMNA (Ciemniejsza) ---
+                targetCtx.font = 'bold 85px Arial, sans-serif';
+                targetCtx.textAlign = 'center';
+                targetCtx.fillText(document.getElementById('timeInput').value, 130, 80);
+                targetCtx.font = 'italic 16px Arial, sans-serif';
+                targetCtx.fillText("Przewoźnik / Operator", 130, 420);
+                targetCtx.font = 'bold 24px Arial, sans-serif';
+                targetCtx.fillText(document.getElementById('operatorInput').value, 130, 445);
+
+                // --- PRAWA KOLUMNA (Jaśniejsza) ---
+                targetCtx.textAlign = 'left';
+                targetCtx.font = 'italic 18px Arial, sans-serif';
+                targetCtx.fillText("Stacja docelowa / Destination:", 285, 30);
+                targetCtx.font = 'bold 75px Arial, sans-serif';
+                targetCtx.fillText(document.getElementById('destInputTrain').value, 285, 60);
+                targetCtx.font = 'italic 18px Arial, sans-serif';
+                targetCtx.fillText("Stacje pośrednie / Via stations:", 285, 170);
+                targetCtx.font = 'bold 26px Arial, sans-serif';
+                wrapText(targetCtx, document.getElementById('viaInput').value, 285, 205, 690, 36);
+                targetCtx.font = 'italic 18px Arial, sans-serif';
+                targetCtx.fillText("Nazwa / Name", 285, 420);
+                targetCtx.font = 'bold 26px Arial, sans-serif';
+                targetCtx.fillText(document.getElementById('trainNameInput').value, 285, 445);
+
+            } else if (currentSubMode === 'dir') {
+                // --- TRYB: AUTOBUS KIERUNKOWY (POJAZD) ---
+                const ledColor = document.getElementById('colorInput').value;
                 targetCtx.fillStyle = '#0a0a0a';
                 targetCtx.fillRect(0, 0, 1000, 250);
-
-                // Tekst z efektem świecenia
                 targetCtx.fillStyle = ledColor;
                 targetCtx.shadowColor = ledColor;
                 targetCtx.shadowBlur = 15; 
                 targetCtx.textBaseline = 'middle';
-
-                // Linia
                 targetCtx.font = 'bold 110px "DotGothic16", monospace';
                 targetCtx.textAlign = 'center';
-                targetCtx.fillText(lineText, 110, 250 / 2 + 5);
-
-                // Kierunek
+                targetCtx.fillText(document.getElementById('lineInput').value, 110, 250 / 2 + 5);
                 targetCtx.font = '110px "DotGothic16", monospace';
                 targetCtx.textAlign = 'center'; 
-                targetCtx.fillText(destText, 580, 250 / 2 + 5);
+                targetCtx.fillText(document.getElementById('destInputBus').value.toUpperCase(), 580, 250 / 2 + 5);
 
                 // Siatka LED
                 targetCtx.shadowBlur = 0;
@@ -397,63 +525,74 @@
                 for (let x = 0; x < 1000; x += 7) targetCtx.fillRect(x, 0, 2, 250);
 
             } else {
-                // --- TRYB: KOLEJ (PKP) ---
-                const bgBlue = '#1e5088';
-                
-                // Tło
-                targetCtx.fillStyle = bgBlue;
-                targetCtx.fillRect(0, 0, 1000, 500);
-                
-                // Reset cieni
-                targetCtx.shadowBlur = 0; 
-
-                // Pionowa linia oddzielająca
-                targetCtx.fillStyle = '#ffffff';
-                targetCtx.fillRect(260, 20, 3, 460);
-
-                targetCtx.fillStyle = '#ffffff';
+                // --- TRYB: AUTOBUS SIP (PRZYSTANEK) ---
+                targetCtx.fillStyle = '#060606';
+                targetCtx.fillRect(0, 0, 1000, 580);
                 targetCtx.textBaseline = 'top';
 
-                // --- LEWA KOLUMNA ---
-                // Godzina
-                targetCtx.font = 'bold 85px Arial, sans-serif';
+                // Imitacja pikselowego Herbu/Logo w rogu
+                targetCtx.shadowBlur = 0;
+                targetCtx.fillStyle = '#ffffff';
+                targetCtx.fillRect(35, 25, 70, 75); // Biała tarcza
+                targetCtx.fillStyle = '#e74c3c';
+                targetCtx.fillRect(45, 35, 50, 55); // Czerwony środek (orzeł)
+
+                // Nazwa Przystanku (Jasnoniebieski/Cyjan)
+                const cyan = '#42cbf5';
+                targetCtx.fillStyle = cyan;
+                targetCtx.shadowColor = cyan;
+                targetCtx.shadowBlur = 10;
                 targetCtx.textAlign = 'center';
-                targetCtx.fillText(timeInput.value, 130, 80);
+                targetCtx.font = '65px "DotGothic16", monospace';
+                targetCtx.fillText(document.getElementById('sipStopName').value, 500, 25);
 
-                // Etykieta Przewoźnika
-                targetCtx.font = 'italic 16px Arial, sans-serif';
-                targetCtx.fillText("Przewoźnik / Operator", 130, 420);
-                
-                // Przewoźnik
-                targetCtx.font = 'bold 24px Arial, sans-serif';
-                targetCtx.fillText(operatorInput.value, 130, 445);
+                // Zegar (Pomarańczowy)
+                const orange = '#ff9500';
+                targetCtx.fillStyle = orange;
+                targetCtx.shadowColor = orange;
+                targetCtx.textAlign = 'right';
+                targetCtx.font = '80px "DotGothic16", monospace';
+                targetCtx.fillText(document.getElementById('sipTime').value, 970, 15);
 
-                // --- PRAWA KOLUMNA ---
+                // Nagłówki kolumn (Niebieskie/Białawe)
+                const headerCol = '#9dc6e8';
+                targetCtx.fillStyle = headerCol;
+                targetCtx.shadowColor = headerCol;
+                targetCtx.font = '45px "DotGothic16", monospace';
                 targetCtx.textAlign = 'left';
+                targetCtx.fillText("Linia", 30, 130);
+                targetCtx.fillText("Kierunek", 230, 130);
+                targetCtx.textAlign = 'right';
+                targetCtx.fillText("Odjazd", 970, 130);
 
-                // Stacja docelowa Etykieta
-                targetCtx.font = 'italic 18px Arial, sans-serif';
-                targetCtx.fillText("Stacja docelowa / Destination:", 285, 30);
-                
-                // Stacja docelowa Główny napis
-                targetCtx.font = 'bold 75px Arial, sans-serif';
-                targetCtx.fillText(destInputTrain.value, 285, 60);
+                // 4 Rzędy odjazdów (Żółte)
+                const yellow = '#ffcc00';
+                targetCtx.fillStyle = yellow;
+                targetCtx.shadowColor = yellow;
+                targetCtx.font = '55px "DotGothic16", monospace';
+                for (let i = 1; i <= 4; i++) {
+                    let y = 145 + i * 65;
+                    targetCtx.textAlign = 'center';
+                    targetCtx.fillText(document.getElementById('sipL'+i).value, 80, y);
+                    targetCtx.textAlign = 'left';
+                    targetCtx.fillText(document.getElementById('sipD'+i).value, 230, y);
+                    targetCtx.textAlign = 'right';
+                    targetCtx.fillText(document.getElementById('sipT'+i).value, 970, y);
+                }
 
-                // Stacje pośrednie Etykieta
-                targetCtx.font = 'italic 18px Arial, sans-serif';
-                targetCtx.fillText("Stacje pośrednie / Via stations:", 285, 170);
+                // Dolny pasek informacyjny (Zielony)
+                const green = '#2ecc71';
+                targetCtx.fillStyle = green;
+                targetCtx.shadowColor = green;
+                targetCtx.textAlign = 'center';
+                targetCtx.font = '45px "DotGothic16", monospace';
+                targetCtx.fillText(document.getElementById('sipTicker').value, 500, 505);
 
-                // Stacje pośrednie Zawijany tekst
-                targetCtx.font = 'bold 26px Arial, sans-serif';
-                wrapText(targetCtx, viaInput.value, 285, 205, 690, 36);
-
-                // Etykieta Nazwy Pociągu (Lewy dół prawej kolumny)
-                targetCtx.font = 'italic 18px Arial, sans-serif';
-                targetCtx.fillText("Nazwa / Name", 285, 420);
-
-                // Nazwa Pociągu
-                targetCtx.font = 'bold 26px Arial, sans-serif';
-                targetCtx.fillText(trainNameInput.value, 285, 445);
+                // Nakładanie Siatki LED
+                targetCtx.shadowBlur = 0;
+                targetCtx.fillStyle = '#000000';
+                for (let y = 0; y < 580; y += 5) targetCtx.fillRect(0, y, 1000, 2);
+                for (let x = 0; x < 1000; x += 5) targetCtx.fillRect(x, 0, 2, 580);
             }
         }
 
@@ -463,33 +602,25 @@
         }
 
         // --- NASŁUCHIWANIE ZMIAN ---
-        // Autobus
-        lineInput.addEventListener('input', function() {
-            if (lineInput.value.length > 3) lineInput.value = lineInput.value.substring(0, 3);
-            ctx.font = 'bold 110px "DotGothic16", monospace';
-            if (ctx.measureText(lineInput.value).width > 200) {
-                lineInput.value = lastValidLineText;
-            } else {
-                lastValidLineText = lineInput.value;
-                drawBoard();
+        // Aktualizacja po wpisywaniu dla wszystkich trybów
+        const inputs = document.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('input', drawBoard);
+        });
+
+        // Dodatkowe zabezpieczenie długości dla tablicy pojazdu
+        let lastValidLineText = "123";
+        document.getElementById('lineInput').addEventListener('input', function(e) {
+            if (currentMainMode === 'bus' && currentSubMode === 'dir') {
+                if (e.target.value.length > 3) e.target.value = e.target.value.substring(0, 3);
             }
         });
-        destInputBus.addEventListener('input', drawBoard);
-        colorInput.addEventListener('input', drawBoard);
-
-        // Kolej
-        timeInput.addEventListener('input', drawBoard);
-        destInputTrain.addEventListener('input', drawBoard);
-        viaInput.addEventListener('input', drawBoard);
-        operatorInput.addEventListener('input', drawBoard);
-        trainNameInput.addEventListener('input', drawBoard);
 
         // --- MODAL ---
         function openModal() {
             modalOverlay.style.display = 'flex';
             drawToContext(modalCtx);
         }
-
         function closeModal() {
             modalOverlay.style.display = 'none';
         }
@@ -498,18 +629,19 @@
         function downloadImage() {
             canvas.toBlob(function(blob) {
                 if (!blob) return alert("Błąd generowania obrazu.");
-                
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
+                let fileName = "tablica.png";
                 
-                let fileName = "";
-                if (currentMode === 'bus') {
-                    const safeLine = lineInput.value.replace(/[^a-zA-Z0-9]/g, '');
-                    const safeDest = destInputBus.value.replace(/[^a-zA-Z0-9\sąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, '').trim().replace(/\s+/g, '_');
-                    fileName = `autobus_${safeLine}_${safeDest}.png`;
-                } else {
-                    const safeDest = destInputTrain.value.replace(/[^a-zA-Z0-9\sąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, '').trim().replace(/\s+/g, '_');
+                if (currentMainMode === 'train') {
+                    const safeDest = document.getElementById('destInputTrain').value.replace(/[^a-zA-Z0-9]/g, '_');
                     fileName = `kolej_${safeDest}.png`;
+                } else if (currentSubMode === 'dir') {
+                    const safeLine = document.getElementById('lineInput').value.replace(/[^a-zA-Z0-9]/g, '');
+                    fileName = `autobus_pojazd_${safeLine}.png`;
+                } else {
+                    const safeStop = document.getElementById('sipStopName').value.replace(/[^a-zA-Z0-9]/g, '_');
+                    fileName = `autobus_przystanek_${safeStop}.png`;
                 }
                 
                 link.download = fileName;
@@ -521,13 +653,9 @@
             }, 'image/png');
         }
 
-        // --- START APLIKACJI ---
-        setMode('bus'); // Ustawia domyślny tryb i wywołuje drawBoard()
-        
-        // Zapewnienie, że czcionka autobusowa wczyta się prawidłowo
-        document.fonts.ready.then(() => {
-            if(currentMode === 'bus') drawBoard();
-        });
+        // Uruchomienie na start
+        setMainMode('bus'); 
+        document.fonts.ready.then(drawBoard);
     </script>
 </body>
 </html>
