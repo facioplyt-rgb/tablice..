@@ -25,7 +25,6 @@
             text-align: center;
         }
 
-        /* --- WYBÓR GŁÓWNEGO TRYBU --- */
         .mode-selector {
             display: flex;
             gap: 10px;
@@ -60,7 +59,6 @@
             border-color: #2b74c2;
         }
 
-        /* --- PODKATEGORIE AUTOBUSÓW --- */
         .sub-mode-selector {
             display: flex;
             gap: 10px;
@@ -89,7 +87,6 @@
             border-color: #d35400;
         }
 
-        /* --- KONTROLKI --- */
         .controls-container {
             background-color: #1e1e1e;
             padding: 20px;
@@ -124,7 +121,7 @@
             color: #aaa;
         }
 
-        input[type="text"], input[type="color"], textarea {
+        input[type="text"], input[type="color"], input[type="file"], textarea {
             background-color: #2c2c2c;
             color: white;
             padding: 12px;
@@ -136,6 +133,11 @@
             font-family: inherit;
         }
         
+        input[type="file"] {
+            padding: 8px;
+            cursor: pointer;
+        }
+
         textarea {
             resize: vertical;
             min-height: 80px;
@@ -147,7 +149,6 @@
             cursor: pointer;
         }
 
-        /* Specjalne rzędy dla SIP */
         .sip-row {
             display: flex;
             gap: 10px;
@@ -186,10 +187,9 @@
             background-color: #2ecc71;
         }
 
-        /* --- PŁÓTNO (CANVAS) --- */
         .canvas-container {
             width: 100%;
-            max-width: 900px;
+            max-width: 950px;
             position: relative;
             cursor: pointer;
             display: flex;
@@ -222,7 +222,6 @@
             transition: aspect-ratio 0.3s;
         }
 
-        /* --- MODAL --- */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -241,7 +240,7 @@
 
         .modal-content {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -267,22 +266,18 @@
 
     <h1>Generator Tablic Informacyjnych</h1>
 
-    <!-- Główne kategorie -->
     <div class="mode-selector">
         <div class="mode-btn active-bus" id="btnBus" onclick="setMainMode('bus')">🚌 Autobus</div>
         <div class="mode-btn" id="btnTrain" onclick="setMainMode('train')">🚆 Kolej (PKP)</div>
     </div>
 
-    <!-- Podkategorie dla autobusów -->
     <div class="sub-mode-selector" id="subModeBus">
         <div class="sub-mode-btn active" id="btnBusDir" onclick="setSubMode('dir')">Tablica Kierunkowa (Pojazd)</div>
         <div class="sub-mode-btn" id="btnBusSip" onclick="setSubMode('sip')">System Informacji Dynamicznej (Przystanek)</div>
     </div>
 
-    <!-- Kontrolki -->
     <div class="controls-container">
-        
-        <!-- 1. Tablica Kierunkowa Autobusu (Klasyczna LED) -->
+        <!-- 1. Tablica Kierunkowa Autobusu -->
         <div id="controlsBusDir" class="controls">
             <div class="input-group">
                 <label for="lineInput">Linia (max 3 cyfry):</label>
@@ -298,7 +293,7 @@
             </div>
         </div>
 
-        <!-- 2. System Informacji Pasażerskiej (Przystanek) -->
+        <!-- 2. System Informacji Dynamicznej (SIP) -->
         <div id="controlsBusSip" class="controls" style="display: none;">
             <div style="display: flex; gap: 10px; width: 100%;">
                 <div class="input-group" style="flex: 2;">
@@ -310,10 +305,14 @@
                     <input type="text" id="sipTime" value="05:53">
                 </div>
             </div>
+
+            <div class="input-group" style="margin-top: 5px;">
+                <label>Wybierz plik godła/herbu (opcjonalnie):</label>
+                <input type="file" id="crestInput" accept="image/*">
+            </div>
             
             <div class="section-title">Odjazdy:</div>
             
-            <!-- 4 rzędy odjazdów -->
             <div class="sip-row">
                 <input type="text" id="sipL1" value="1" class="sip-l" placeholder="Linia">
                 <input type="text" id="sipD1" value="Wieprzyce PKP" class="sip-d" placeholder="Kierunek">
@@ -372,12 +371,10 @@
         <button class="download-btn" onclick="downloadImage()">Pobierz jako PNG</button>
     </div>
 
-    <!-- Główne płótno -->
     <div class="canvas-container" onclick="openModal()">
         <canvas id="boardCanvas"></canvas>
     </div>
 
-    <!-- Okno modalne -->
     <div id="modalOverlay" class="modal-overlay" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <button class="close-modal" onclick="closeModal()">Zamknij X</button>
@@ -397,8 +394,25 @@
 
         let currentMainMode = 'bus'; 
         let currentSubMode = 'dir'; 
+        let customCrestImage = null; // Przechowywanie wczytanego obrazka godła
 
-        // Funkcje Przełączania Trybów
+        // Obsługa wczytywania pliku godła
+        document.getElementById('crestInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        customCrestImage = img;
+                        drawBoard();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
         function setMainMode(mode) {
             currentMainMode = mode;
             document.getElementById('btnBus').className = mode === 'bus' ? 'mode-btn active-bus' : 'mode-btn';
@@ -415,7 +429,6 @@
         }
 
         function updateUI() {
-            // Ukryj wszystkie
             document.getElementById('controlsBusDir').style.display = 'none';
             document.getElementById('controlsBusSip').style.display = 'none';
             document.getElementById('controlsTrain').style.display = 'none';
@@ -431,16 +444,17 @@
                     w = 1000; h = 250; targetRatio = "4 / 1";
                 } else {
                     document.getElementById('controlsBusSip').style.display = 'flex';
-                    w = 1000; h = 580; targetRatio = "1000 / 580";
+                    // Zwiększona szerokość do 1200 dla lepszego wyskalowania SIP
+                    w = 1200; h = 580; targetRatio = "1200 / 580";
                 }
             }
 
             canvas.width = w; canvas.height = h; canvas.style.aspectRatio = targetRatio;
             modalCanvas.width = w; modalCanvas.height = h; modalCanvas.style.aspectRatio = targetRatio;
+            
             drawBoard();
         }
 
-        // Pomocnicze zawijanie tekstu dla PKP
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const words = text.split(/(?=[,\s])/); 
             let line = '';
@@ -459,25 +473,23 @@
             context.fillText(line.trim(), x, y);
         }
 
-        // Rysowanie na płótnie
         function drawToContext(targetCtx) {
-            if (currentMainMode === 'train') {
-                // --- TRYB: KOLEJ (PKP) ---
-                
-                // Prawe, jaśniejsze tło
-                targetCtx.fillStyle = '#1e5088';
-                targetCtx.fillRect(0, 0, 1000, 500);
+            const width = targetCtx.canvas.width;
+            const height = targetCtx.canvas.height;
 
-                // Lewe, ciemniejsze tło (Nowość!)
-                targetCtx.fillStyle = '#11355e';
-                targetCtx.fillRect(0, 0, 260, 500);
+            if (currentMainMode === 'train') {
+                // --- KOLEJ PKP ---
+                targetCtx.fillStyle = '#1e5088';
+                targetCtx.fillRect(0, 0, width, height);
+
+                targetCtx.fillStyle = '#11355e'; // Ciemniejszy lewy panel
+                targetCtx.fillRect(0, 0, 260, height);
                 
                 targetCtx.shadowBlur = 0; 
                 targetCtx.fillStyle = '#ffffff';
-                targetCtx.fillRect(260, 20, 3, 460); // Pionowa biała linia
+                targetCtx.fillRect(260, 20, 3, height - 40);
                 targetCtx.textBaseline = 'top';
 
-                // --- LEWA KOLUMNA (Ciemniejsza) ---
                 targetCtx.font = 'bold 85px Arial, sans-serif';
                 targetCtx.textAlign = 'center';
                 targetCtx.fillText(document.getElementById('timeInput').value, 130, 80);
@@ -486,7 +498,6 @@
                 targetCtx.font = 'bold 24px Arial, sans-serif';
                 targetCtx.fillText(document.getElementById('operatorInput').value, 130, 445);
 
-                // --- PRAWA KOLUMNA (Jaśniejsza) ---
                 targetCtx.textAlign = 'left';
                 targetCtx.font = 'italic 18px Arial, sans-serif';
                 targetCtx.fillText("Stacja docelowa / Destination:", 285, 30);
@@ -495,65 +506,69 @@
                 targetCtx.font = 'italic 18px Arial, sans-serif';
                 targetCtx.fillText("Stacje pośrednie / Via stations:", 285, 170);
                 targetCtx.font = 'bold 26px Arial, sans-serif';
-                wrapText(targetCtx, document.getElementById('viaInput').value, 285, 205, 690, 36);
+                wrapText(targetCtx, document.getElementById('viaInput').value, 285, 205, width - 310, 36);
                 targetCtx.font = 'italic 18px Arial, sans-serif';
                 targetCtx.fillText("Nazwa / Name", 285, 420);
                 targetCtx.font = 'bold 26px Arial, sans-serif';
                 targetCtx.fillText(document.getElementById('trainNameInput').value, 285, 445);
 
             } else if (currentSubMode === 'dir') {
-                // --- TRYB: AUTOBUS KIERUNKOWY (POJAZD) ---
+                // --- AUTOBUS KIERUNKOWY ---
                 const ledColor = document.getElementById('colorInput').value;
                 targetCtx.fillStyle = '#0a0a0a';
-                targetCtx.fillRect(0, 0, 1000, 250);
+                targetCtx.fillRect(0, 0, width, height);
                 targetCtx.fillStyle = ledColor;
                 targetCtx.shadowColor = ledColor;
                 targetCtx.shadowBlur = 15; 
                 targetCtx.textBaseline = 'middle';
                 targetCtx.font = 'bold 110px "DotGothic16", monospace';
                 targetCtx.textAlign = 'center';
-                targetCtx.fillText(document.getElementById('lineInput').value, 110, 250 / 2 + 5);
+                targetCtx.fillText(document.getElementById('lineInput').value, 110, height / 2 + 5);
                 targetCtx.font = '110px "DotGothic16", monospace';
                 targetCtx.textAlign = 'center'; 
-                targetCtx.fillText(document.getElementById('destInputBus').value.toUpperCase(), 580, 250 / 2 + 5);
+                targetCtx.fillText(document.getElementById('destInputBus').value.toUpperCase(), width / 2 + 80, height / 2 + 5);
 
-                // Siatka LED
                 targetCtx.shadowBlur = 0;
                 targetCtx.fillStyle = '#000000';
-                for (let y = 0; y < 250; y += 7) targetCtx.fillRect(0, y, 1000, 2);
-                for (let x = 0; x < 1000; x += 7) targetCtx.fillRect(x, 0, 2, 250);
+                for (let y = 0; y < height; y += 7) targetCtx.fillRect(0, y, width, 2);
+                for (let x = 0; x < width; x += 7) targetCtx.fillRect(x, 0, 2, height);
 
             } else {
-                // --- TRYB: AUTOBUS SIP (PRZYSTANEK) ---
+                // --- SYSTEM INFORMACJI DYNAMICZNEJ (SIP - SZERSZY) ---
                 targetCtx.fillStyle = '#060606';
-                targetCtx.fillRect(0, 0, 1000, 580);
+                targetCtx.fillRect(0, 0, width, height);
                 targetCtx.textBaseline = 'top';
 
-                // Imitacja pikselowego Herbu/Logo w rogu
                 targetCtx.shadowBlur = 0;
-                targetCtx.fillStyle = '#ffffff';
-                targetCtx.fillRect(35, 25, 70, 75); // Biała tarcza
-                targetCtx.fillStyle = '#e74c3c';
-                targetCtx.fillRect(45, 35, 50, 55); // Czerwony środek (orzeł)
+                if (customCrestImage) {
+                    // Rysowanie wczytanego z pliku godła
+                    targetCtx.drawImage(customCrestImage, 30, 20, 75, 80);
+                } else {
+                    // Domyślny zastępczy kształt godła
+                    targetCtx.fillStyle = '#ffffff';
+                    targetCtx.fillRect(30, 20, 70, 75);
+                    targetCtx.fillStyle = '#e74c3c';
+                    targetCtx.fillRect(40, 30, 50, 55);
+                }
 
-                // Nazwa Przystanku (Jasnoniebieski/Cyjan)
+                // Nazwa Przystanku
                 const cyan = '#42cbf5';
                 targetCtx.fillStyle = cyan;
                 targetCtx.shadowColor = cyan;
                 targetCtx.shadowBlur = 10;
                 targetCtx.textAlign = 'center';
                 targetCtx.font = '65px "DotGothic16", monospace';
-                targetCtx.fillText(document.getElementById('sipStopName').value, 500, 25);
+                targetCtx.fillText(document.getElementById('sipStopName').value, width / 2, 25);
 
-                // Zegar (Pomarańczowy)
+                // Zegar
                 const orange = '#ff9500';
                 targetCtx.fillStyle = orange;
                 targetCtx.shadowColor = orange;
                 targetCtx.textAlign = 'right';
                 targetCtx.font = '80px "DotGothic16", monospace';
-                targetCtx.fillText(document.getElementById('sipTime').value, 970, 15);
+                targetCtx.fillText(document.getElementById('sipTime').value, width - 30, 15);
 
-                // Nagłówki kolumn (Niebieskie/Białawe)
+                // Nagłówki kolumn
                 const headerCol = '#9dc6e8';
                 targetCtx.fillStyle = headerCol;
                 targetCtx.shadowColor = headerCol;
@@ -562,9 +577,9 @@
                 targetCtx.fillText("Linia", 30, 130);
                 targetCtx.fillText("Kierunek", 230, 130);
                 targetCtx.textAlign = 'right';
-                targetCtx.fillText("Odjazd", 970, 130);
+                targetCtx.fillText("Odjazd", width - 30, 130);
 
-                // 4 Rzędy odjazdów (Żółte)
+                // 4 Rzędy odjazdów
                 const yellow = '#ffcc00';
                 targetCtx.fillStyle = yellow;
                 targetCtx.shadowColor = yellow;
@@ -576,22 +591,22 @@
                     targetCtx.textAlign = 'left';
                     targetCtx.fillText(document.getElementById('sipD'+i).value, 230, y);
                     targetCtx.textAlign = 'right';
-                    targetCtx.fillText(document.getElementById('sipT'+i).value, 970, y);
+                    targetCtx.fillText(document.getElementById('sipT'+i).value, width - 30, y);
                 }
 
-                // Dolny pasek informacyjny (Zielony)
+                // Dolny pasek informacyjny
                 const green = '#2ecc71';
                 targetCtx.fillStyle = green;
                 targetCtx.shadowColor = green;
                 targetCtx.textAlign = 'center';
                 targetCtx.font = '45px "DotGothic16", monospace';
-                targetCtx.fillText(document.getElementById('sipTicker').value, 500, 505);
+                targetCtx.fillText(document.getElementById('sipTicker').value, width / 2, 505);
 
-                // Nakładanie Siatki LED
+                // Siatka LED
                 targetCtx.shadowBlur = 0;
                 targetCtx.fillStyle = '#000000';
-                for (let y = 0; y < 580; y += 5) targetCtx.fillRect(0, y, 1000, 2);
-                for (let x = 0; x < 1000; x += 5) targetCtx.fillRect(x, 0, 2, 580);
+                for (let y = 0; y < height; y += 5) targetCtx.fillRect(0, y, width, 2);
+                for (let x = 0; x < width; x += 5) targetCtx.fillRect(x, 0, 2, height);
             }
         }
 
@@ -600,22 +615,19 @@
             drawToContext(modalCtx);
         }
 
-        // --- NASŁUCHIWANIE ZMIAN ---
-        // Aktualizacja po wpisywaniu dla wszystkich trybów
         const inputs = document.querySelectorAll('input, textarea');
         inputs.forEach(input => {
-            input.addEventListener('input', drawBoard);
+            if(input.type !== 'file') {
+                input.addEventListener('input', drawBoard);
+            }
         });
 
-        // Dodatkowe zabezpieczenie długości dla tablicy pojazdu
-        let lastValidLineText = "123";
         document.getElementById('lineInput').addEventListener('input', function(e) {
             if (currentMainMode === 'bus' && currentSubMode === 'dir') {
                 if (e.target.value.length > 3) e.target.value = e.target.value.substring(0, 3);
             }
         });
 
-        // --- MODAL ---
         function openModal() {
             modalOverlay.style.display = 'flex';
             drawToContext(modalCtx);
@@ -624,7 +636,6 @@
             modalOverlay.style.display = 'none';
         }
 
-        // --- POBIERANIE ---
         function downloadImage() {
             canvas.toBlob(function(blob) {
                 if (!blob) return alert("Błąd generowania obrazu.");
@@ -652,7 +663,6 @@
             }, 'image/png');
         }
 
-        // Uruchomienie na start
         setMainMode('bus'); 
         document.fonts.ready.then(drawBoard);
     </script>
