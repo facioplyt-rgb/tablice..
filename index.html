@@ -1,388 +1,422 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Generator Tablic Informacyjnych</title>
-    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Tablic Informacyjnych PRO</title>
+    
+    <!-- Pobranie nowoczesnych czcionek -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=DotGothic16&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent-bus: #f59e0b;
+            --accent-train: #0284c7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121212;
-            color: #ecf0f1;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px 10px;
+            padding: 30px 15px;
             margin: 0;
             min-height: 100vh;
         }
 
         h1 {
-            margin-top: 5px;
-            color: #f1c40f;
-            font-size: 24px;
+            margin: 0 0 30px 0;
+            color: var(--text-main);
+            font-size: 32px;
+            font-weight: 800;
             text-align: center;
+            letter-spacing: -1px;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .mode-selector {
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 18px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            background-color: var(--panel-bg);
+            color: var(--text-muted);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-btn:hover {
+            border-color: #475569;
+            color: var(--text-main);
+        }
+
+        .tab-btn.active-bus {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--accent-bus);
+            border-color: var(--accent-bus);
+        }
+
+        .tab-btn.active-train {
+            background-color: rgba(2, 132, 199, 0.1);
+            color: var(--text-main);
+            border-color: var(--accent-train);
+        }
+
+        .sub-tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 25px;
             width: 100%;
-            max-width: 700px;
+            max-width: 900px;
         }
 
-        .mode-btn {
+        .sub-tab-btn {
             flex: 1;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-            background-color: #1e1e1e;
-            color: #aaa;
-            border: 2px solid #333;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            background-color: var(--panel-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
         }
 
-        .mode-btn.active-bus {
-            background-color: #d35400;
-            color: white;
-            border-color: #e67e22;
-        }
-
-        .mode-btn.active-train {
-            background-color: #1e5088;
-            color: white;
-            border-color: #2b74c2;
-        }
-
-        .sub-mode-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 700px;
-        }
-
-        .sub-mode-btn {
-            flex: 1;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            text-align: center;
-            background-color: #1e1e1e;
-            color: #888;
-            border: 1px solid #444;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .sub-mode-btn.active {
-            background-color: #e67e22;
-            color: white;
-            border-color: #d35400;
+        .sub-tab-btn.active {
+            background-color: var(--accent-bus);
+            color: #fff;
+            border-color: var(--accent-bus);
         }
 
         .controls-container {
-            background-color: #1e1e1e;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            margin-bottom: 20px;
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            margin-bottom: 30px;
             width: 100%;
-            max-width: 700px;
+            max-width: 900px;
             box-sizing: border-box;
         }
 
-        .controls {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: flex-end;
+        /* Lepszy układ za pomocą CSS Grid */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .controls-grid.full-width {
+            grid-template-columns: 1fr;
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            flex: 1;
-            min-width: 120px;
-            width: 100%;
+            gap: 8px;
         }
 
         label {
             font-size: 13px;
-            font-weight: bold;
-            color: #aaa;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        input[type="text"], input[type="color"], input[type="file"], textarea {
-            background-color: #2c2c2c;
-            color: white;
-            padding: 12px;
-            border: 1px solid #444;
-            border-radius: 5px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
+        input[type="text"], input[type="file"], textarea {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
             font-family: inherit;
+            transition: border-color 0.2s;
         }
-        
-        input[type="file"] {
-            padding: 8px;
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 100%;
+            height: 50px;
+            border-radius: 8px;
             cursor: pointer;
+            background-color: var(--bg-color);
+            padding: 4px;
         }
+
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
 
         textarea {
             resize: vertical;
             min-height: 80px;
+            line-height: 1.5;
         }
 
-        input[type="color"] {
-            height: 45px;
-            padding: 2px;
-            cursor: pointer;
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-bus);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 15px;
+            margin-bottom: 5px;
         }
 
         .sip-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 0.5fr 2fr 1fr;
             gap: 10px;
-            width: 100%;
-            margin-bottom: 5px;
-        }
-        .sip-l { flex: 0.5; text-align: center; font-weight: bold; }
-        .sip-d { flex: 2; }
-        .sip-t { flex: 1; text-align: right; }
-        
-        .section-title {
-            width: 100%;
-            font-size: 14px;
-            color: #e67e22;
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-            margin-top: 10px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         button.download-btn {
-            background-color: #27ae60;
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
             border: none;
-            padding: 14px 20px;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 5px;
+            padding: 18px 24px;
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 12px;
             cursor: pointer;
             width: 100%;
-            transition: background-color 0.2s;
-            margin-top: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 25px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         }
 
         button.download-btn:hover {
-            background-color: #2ecc71;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
         }
 
         .canvas-container {
             width: 100%;
-            max-width: 950px;
+            max-width: 1000px;
             position: relative;
             cursor: pointer;
             display: flex;
             justify-content: center;
-            margin-bottom: 30px;
+            margin-bottom: 50px;
         }
 
         .canvas-container::after {
-            content: "Kliknij tablicę, aby powiększyć do zrzutu ekranu";
+            content: "Kliknij tablicę, aby zobaczyć podgląd w powiększeniu";
             position: absolute;
-            bottom: -30px;
+            bottom: -35px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.1);
-            color: #ddd;
-            padding: 6px 12px;
+            background: rgba(30, 41, 59, 0.8);
+            color: #cbd5e1;
+            padding: 8px 16px;
             font-size: 13px;
-            border-radius: 15px;
+            border-radius: 20px;
             pointer-events: none;
             white-space: nowrap;
         }
 
         canvas {
             background-color: #000;
-            border: 4px solid #1a1a1a;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            border: 6px solid #0f172a;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
             width: 100%;
             height: auto;
             display: block;
-            transition: aspect-ratio 0.3s;
+            transition: all 0.3s;
         }
 
+        /* Modal podglądu */
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.95);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.95);
             z-index: 9999;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            padding: 10px;
+            padding: 20px;
             box-sizing: border-box;
+            backdrop-filter: blur(5px);
         }
 
         .modal-content {
             width: 100%;
-            max-width: 1100px;
+            max-width: 1400px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            position: relative;
         }
 
         .close-modal {
-            background: #c0392b;
+            background: #ef4444;
             color: white;
             border: none;
-            padding: 10px 15px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 5px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 800;
+            border-radius: 8px;
             cursor: pointer;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             align-self: flex-end;
-            width: auto;
+            transition: background 0.2s;
         }
+
+        .close-modal:hover { background: #dc2626; }
     </style>
 </head>
 <body>
 
-    <h1>Generator Tablic Informacyjnych</h1>
+    <h1>Generator Tablic PRO</h1>
 
-    <div class="mode-selector">
-        <div class="mode-btn active-bus" id="btnBus" onclick="setMainMode('bus')">🚌 Autobus</div>
-        <div class="mode-btn" id="btnTrain" onclick="setMainMode('train')">🚆 Kolej (PKP)</div>
+    <!-- Wybór głównego trybu -->
+    <div class="tabs">
+        <div class="tab-btn active-bus" id="btnBus" onclick="setMainMode('bus')">🚌 Autobus / Tramwaj</div>
+        <div class="tab-btn" id="btnTrain" onclick="setMainMode('train')">🚆 Kolej (PKP)</div>
     </div>
 
-    <div class="sub-mode-selector" id="subModeBus">
-        <div class="sub-mode-btn active" id="btnBusDir" onclick="setSubMode('dir')">Tablica Kierunkowa (Pojazd)</div>
-        <div class="sub-mode-btn" id="btnBusSip" onclick="setSubMode('sip')">System Informacji Dynamicznej (Przystanek)</div>
+    <!-- Podmenu dla Autobusu -->
+    <div class="sub-tabs" id="subModeBus">
+        <div class="sub-tab-btn active" id="btnBusDir" onclick="setSubMode('dir')">Kierunkowa (Pojazd)</div>
+        <div class="sub-tab-btn" id="btnBusSip" onclick="setSubMode('sip')">System Informacji Pasażerskiej (Przystanek)</div>
     </div>
 
     <div class="controls-container">
-        <!-- 1. Tablica Kierunkowa Autobusu -->
-        <div id="controlsBusDir" class="controls">
+        
+        <!-- 1. TABLICA KIERUNKOWA POJAZDU -->
+        <div id="controlsBusDir" class="controls-grid" style="display: none;">
             <div class="input-group">
-                <label for="lineInput">Linia (max 3 cyfry):</label>
-                <input type="text" id="lineInput" value="123" maxlength="3">
+                <label>Linia (max 4 znaki):</label>
+                <input type="text" id="lineInput" value="123" maxlength="4">
             </div>
-            <div class="input-group" style="flex: 2;">
-                <label for="destInputBus">Kierunek:</label>
-                <input type="text" id="destInputBus" value="DWORZEC GŁÓWNY">
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Kierunek (bardzo długi tekst się zmieści):</label>
+                <input type="text" id="destInputBus" value="DWORZEC GŁÓWNY - HALA">
             </div>
-            <div class="input-group" style="min-width: 60px; flex: 0.5;">
-                <label for="colorInput">Kolor:</label>
+            <div class="input-group">
+                <label>Kolor diod LED:</label>
                 <input type="color" id="colorInput" value="#ff9900">
             </div>
         </div>
 
-        <!-- 2. System Informacji Dynamicznej (SIP) -->
-        <div id="controlsBusSip" class="controls" style="display: none;">
-            <div style="display: flex; gap: 10px; width: 100%;">
-                <div class="input-group" style="flex: 2;">
-                    <label>Nazwa przystanku:</label>
-                    <input type="text" id="sipStopName" value="Fieldorfa-Nila">
-                </div>
-                <div class="input-group" style="flex: 1;">
-                    <label>Zegar:</label>
-                    <input type="text" id="sipTime" value="05:53">
-                </div>
+        <!-- 2. SYSTEM INFORMACJI DYNAMICZNEJ (SIP) -->
+        <div id="controlsBusSip" class="controls-grid" style="display: none;">
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Nazwa Przystanku:</label>
+                <input type="text" id="sipStopName" value="Rondo Radosława">
             </div>
-
-            <div class="input-group" style="margin-top: 5px;">
-                <label>Wybierz plik godła/herbu (opcjonalnie):</label>
+            <div class="input-group">
+                <label>Zegar:</label>
+                <input type="text" id="sipTime" value="14:53">
+            </div>
+            <div class="input-group" style="grid-column: span 3;">
+                <label>Logo/Herb miasta (opcjonalnie):</label>
                 <input type="file" id="crestInput" accept="image/*">
             </div>
             
-            <div class="section-title">Odjazdy:</div>
-            
-            <div class="sip-row">
-                <input type="text" id="sipL1" value="1" class="sip-l" placeholder="Linia">
-                <input type="text" id="sipD1" value="Wieprzyce PKP" class="sip-d" placeholder="Kierunek">
-                <input type="text" id="sipT1" value="5 min" class="sip-t" placeholder="Czas">
-            </div>
-            <div class="sip-row">
-                <input type="text" id="sipL2" value="4" class="sip-l">
-                <input type="text" id="sipD2" value="Dworzec Główny" class="sip-d">
-                <input type="text" id="sipT2" value="9 min" class="sip-t">
-            </div>
-            <div class="sip-row">
-                <input type="text" id="sipL3" value="3" class="sip-l">
-                <input type="text" id="sipD3" value="Piaski" class="sip-d">
-                <input type="text" id="sipT3" value="13 min" class="sip-t">
-            </div>
-            <div class="sip-row">
-                <input type="text" id="sipL4" value="1" class="sip-l">
-                <input type="text" id="sipD4" value="Wieprzyce PKP" class="sip-d">
-                <input type="text" id="sipT4" value="25 min" class="sip-t">
+            <div class="section-title">Najbliższe odjazdy:</div>
+            <div style="grid-column: 1 / -1;">
+                <div class="sip-row">
+                    <input type="text" id="sipL1" value="17" placeholder="Linia">
+                    <input type="text" id="sipD1" value="Winnica" placeholder="Kierunek">
+                    <input type="text" id="sipT1" value="3 min" placeholder="Czas">
+                </div>
+                <div class="sip-row">
+                    <input type="text" id="sipL2" value="33" placeholder="Linia">
+                    <input type="text" id="sipD2" value="Metro Młociny" placeholder="Kierunek">
+                    <input type="text" id="sipT2" value="7 min" placeholder="Czas">
+                </div>
+                <div class="sip-row">
+                    <input type="text" id="sipL3" value="41" placeholder="Linia">
+                    <input type="text" id="sipD3" value="Żerań FSO" placeholder="Kierunek">
+                    <input type="text" id="sipT3" value="12 min" placeholder="Czas">
+                </div>
+                <div class="sip-row">
+                    <input type="text" id="sipL4" value="17" placeholder="Linia">
+                    <input type="text" id="sipD4" value="Winnica" placeholder="Kierunek">
+                    <input type="text" id="sipT4" value="15 min" placeholder="Czas">
+                </div>
             </div>
 
-            <div class="input-group">
-                <label>Pasek informacyjny (Dół):</label>
-                <input type="text" id="sipTicker" value="Jakość powietrza bardzo dobra =)">
+            <div class="input-group" style="grid-column: span 3; margin-top: 10px;">
+                <label>Pasek informacyjny (Dolny Ticker):</label>
+                <input type="text" id="sipTicker" value=">> ZMIANA ROZKŁADU JAZDY OD 1 WRZEŚNIA <<">
             </div>
         </div>
 
-        <!-- 3. Tablica Kolejowa -->
-        <div id="controlsTrain" class="controls" style="display: none;">
-            <div style="display: flex; gap: 15px; width: 100%;">
-                <div class="input-group" style="flex: 1;">
-                    <label for="timeInput">Godzina:</label>
-                    <input type="text" id="timeInput" value="4:58">
-                </div>
-                <div class="input-group" style="flex: 3;">
-                    <label for="destInputTrain">Stacja docelowa:</label>
-                    <input type="text" id="destInputTrain" value="Szczecin Główny">
-                </div>
+        <!-- 3. TABLICA KOLEJOWA PKP -->
+        <div id="controlsTrain" class="controls-grid" style="display: none;">
+            <div class="input-group">
+                <label>Godzina Odjazdu:</label>
+                <input type="text" id="timeInput" value="16:45">
+            </div>
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Stacja docelowa:</label>
+                <input type="text" id="destInputTrain" value="Warszawa Wschodnia">
+            </div>
+            <div class="input-group" style="grid-column: span 3;">
+                <label>Stacje pośrednie (zostaną zgrabnie ułożone w wielu liniach):</label>
+                <textarea id="viaInput">Kraków Główny, Miechów, Włoszczowa Północ, Opoczno Południe, Warszawa Zachodnia, Warszawa Centralna</textarea>
             </div>
             <div class="input-group">
-                <label for="viaInput">Stacje pośrednie (rozdzielone przecinkami):</label>
-                <textarea id="viaInput">Sopot, Gdynia Główna, Rumia, Wejherowo, Lębork, Słupsk, Sławno, Koszalin, Białogard, Stargard, Szczecin Dąbie</textarea>
+                <label>Przewoźnik:</label>
+                <input type="text" id="operatorInput" value="PKP Intercity">
             </div>
-            <div style="display: flex; gap: 15px; width: 100%;">
-                <div class="input-group">
-                    <label for="operatorInput">Przewoźnik:</label>
-                    <input type="text" id="operatorInput" value="PKP Intercity">
-                </div>
-                <div class="input-group">
-                    <label for="trainNameInput">Nazwa pociągu:</label>
-                    <input type="text" id="trainNameInput" value="IC Albatros">
-                </div>
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Kategoria i Nazwa pociągu:</label>
+                <input type="text" id="trainNameInput" value="EIP 3104 (Pendolino)">
             </div>
         </div>
 
-        <button class="download-btn" onclick="downloadImage()">Pobierz jako PNG</button>
+        <button class="download-btn" onclick="downloadImage()">Pobierz jako Plik PNG (Wysoka Jakość 8K)</button>
     </div>
 
+    <!-- Płótna (Canvas) -->
     <div class="canvas-container" onclick="openModal()">
         <canvas id="boardCanvas"></canvas>
     </div>
 
     <div id="modalOverlay" class="modal-overlay" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-modal" onclick="closeModal()">Zamknij X</button>
+            <button class="close-modal" onclick="closeModal()">Zamknij Podgląd</button>
             <canvas id="modalCanvas"></canvas>
-            <div style="margin-top:20px; color:#aaa; font-size:13px; text-align:center;">
-                Zrób zrzut ekranu (PrintScreen).<br>Kliknij X lub w tło, aby zamknąć.
-            </div>
         </div>
     </div>
 
@@ -395,9 +429,12 @@
 
         let currentMainMode = 'bus'; 
         let currentSubMode = 'dir'; 
-        let customCrestImage = null; // Przechowywanie wczytanego obrazka godła
+        let customCrestImage = null; 
 
-        // Obsługa wczytywania pliku godła
+        // MNOŻNIK 8K (im wyższy, tym ostrzejszy plik końcowy)
+        const SCALE = 8; 
+
+        // Ładowanie obrazka (herbu)
         document.getElementById('crestInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -416,16 +453,16 @@
 
         function setMainMode(mode) {
             currentMainMode = mode;
-            document.getElementById('btnBus').className = mode === 'bus' ? 'mode-btn active-bus' : 'mode-btn';
-            document.getElementById('btnTrain').className = mode === 'train' ? 'mode-btn active-train' : 'mode-btn';
+            document.getElementById('btnBus').className = mode === 'bus' ? 'tab-btn active-bus' : 'tab-btn';
+            document.getElementById('btnTrain').className = mode === 'train' ? 'tab-btn active-train' : 'tab-btn';
             document.getElementById('subModeBus').style.display = mode === 'bus' ? 'flex' : 'none';
             updateUI();
         }
 
         function setSubMode(mode) {
             currentSubMode = mode;
-            document.getElementById('btnBusDir').className = mode === 'dir' ? 'sub-mode-btn active' : 'sub-mode-btn';
-            document.getElementById('btnBusSip').className = mode === 'sip' ? 'sub-mode-btn active' : 'sub-mode-btn';
+            document.getElementById('btnBusDir').className = mode === 'dir' ? 'sub-tab-btn active' : 'sub-tab-btn';
+            document.getElementById('btnBusSip').className = mode === 'sip' ? 'sub-tab-btn active' : 'sub-tab-btn';
             updateUI();
         }
 
@@ -434,28 +471,39 @@
             document.getElementById('controlsBusSip').style.display = 'none';
             document.getElementById('controlsTrain').style.display = 'none';
 
+            // Nowe, SZERSZE rozdzielczości logiczne
             let targetRatio, w, h;
 
             if (currentMainMode === 'train') {
-                document.getElementById('controlsTrain').style.display = 'flex';
-                w = 1000; h = 500; targetRatio = "2 / 1";
+                document.getElementById('controlsTrain').style.display = 'grid';
+                w = 1600; h = 600; targetRatio = "16 / 6";
             } else {
                 if (currentSubMode === 'dir') {
-                    document.getElementById('controlsBusDir').style.display = 'flex';
-                    w = 1000; h = 250; targetRatio = "4 / 1";
+                    document.getElementById('controlsBusDir').style.display = 'grid';
+                    w = 1600; h = 300; targetRatio = "16 / 3";
                 } else {
-                    document.getElementById('controlsBusSip').style.display = 'flex';
-                    // Zwiększona szerokość do 1200 dla lepszego wyskalowania SIP
-                    w = 1200; h = 580; targetRatio = "1200 / 580";
+                    document.getElementById('controlsBusSip').style.display = 'grid';
+                    w = 1600; h = 800; targetRatio = "2 / 1";
                 }
             }
 
-            canvas.width = w; canvas.height = h; canvas.style.aspectRatio = targetRatio;
-            modalCanvas.width = w; modalCanvas.height = h; modalCanvas.style.aspectRatio = targetRatio;
+            // Aplikowanie fizycznych pikseli (Wymiary * 8K)
+            canvas.width = w * SCALE; 
+            canvas.height = h * SCALE; 
+            canvas.style.aspectRatio = targetRatio;
+            
+            modalCanvas.width = w * SCALE; 
+            modalCanvas.height = h * SCALE; 
+            modalCanvas.style.aspectRatio = targetRatio;
+
+            // Zapisujemy logiczne wymiary do kontekstu
+            canvas.logicalW = w; canvas.logicalH = h;
+            modalCanvas.logicalW = w; modalCanvas.logicalH = h;
             
             drawBoard();
         }
 
+        // Funkcja łamiąca długi tekst na wiele linii
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const words = text.split(/(?=[,\s])/); 
             let line = '';
@@ -474,141 +522,185 @@
             context.fillText(line.trim(), x, y);
         }
 
+        // Rysowanie realistycznej siatki LED
+        function drawLEDGrid(targetCtx, w, h) {
+            const step = 6; // Wielkość jednej diody
+            targetCtx.shadowBlur = 0;
+            targetCtx.lineWidth = 1.5;
+            targetCtx.strokeStyle = 'rgba(0, 0, 0, 0.85)'; // Ciemna siatka maskująca świecenie
+            
+            targetCtx.beginPath();
+            // Linie pionowe
+            for (let x = 0; x <= w; x += step) {
+                targetCtx.moveTo(x, 0);
+                targetCtx.lineTo(x, h);
+            }
+            // Linie poziome
+            for (let y = 0; y <= h; y += step) {
+                targetCtx.moveTo(0, y);
+                targetCtx.lineTo(w, y);
+            }
+            targetCtx.stroke();
+        }
+
         function drawToContext(targetCtx) {
-            const width = targetCtx.canvas.width;
-            const height = targetCtx.canvas.height;
+            const width = targetCtx.canvas.logicalW;
+            const height = targetCtx.canvas.logicalH;
+
+            targetCtx.save();
+            targetCtx.scale(SCALE, SCALE);
 
             if (currentMainMode === 'train') {
-                // --- KOLEJ PKP ---
-                targetCtx.fillStyle = '#1e5088';
+                // --- KOLEJ PKP (NOWY SZERSZY UKŁAD) ---
+                targetCtx.fillStyle = '#1e5088'; // Typowy niebieski PKP
                 targetCtx.fillRect(0, 0, width, height);
 
-                targetCtx.fillStyle = '#11355e'; // Ciemniejszy lewy panel
-                targetCtx.fillRect(0, 0, 260, height);
+                const leftPanelW = 350; // Szerszy lewy panel
+                targetCtx.fillStyle = '#11355e';
+                targetCtx.fillRect(0, 0, leftPanelW, height);
                 
-                targetCtx.shadowBlur = 0; 
+                // Pasek oddzielający
                 targetCtx.fillStyle = '#ffffff';
-                targetCtx.fillRect(260, 20, 3, height - 40);
+                targetCtx.fillRect(leftPanelW, 20, 4, height - 40);
+                
                 targetCtx.textBaseline = 'top';
 
-                targetCtx.font = 'bold 85px Arial, sans-serif';
+                // LEWY PANEL (Czas i przewoźnik)
+                targetCtx.font = 'bold 120px "Oswald", Arial, sans-serif';
                 targetCtx.textAlign = 'center';
-                targetCtx.fillText(document.getElementById('timeInput').value, 130, 80);
-                targetCtx.font = 'italic 16px Arial, sans-serif';
-                targetCtx.fillText("Przewoźnik / Operator", 130, 420);
-                targetCtx.font = 'bold 24px Arial, sans-serif';
-                targetCtx.fillText(document.getElementById('operatorInput').value, 130, 445);
+                targetCtx.fillText(document.getElementById('timeInput').value, leftPanelW / 2, 70);
+                
+                targetCtx.font = 'italic 20px "Oswald", Arial, sans-serif';
+                targetCtx.fillText("Przewoźnik / Operator", leftPanelW / 2, 500);
+                targetCtx.font = 'bold 30px "Oswald", Arial, sans-serif';
+                targetCtx.fillText(document.getElementById('operatorInput').value, leftPanelW / 2, 530);
 
+                // PRAWY PANEL (Szczegóły pociągu)
                 targetCtx.textAlign = 'left';
-                targetCtx.font = 'italic 18px Arial, sans-serif';
-                targetCtx.fillText("Stacja docelowa / Destination:", 285, 30);
-                targetCtx.font = 'bold 75px Arial, sans-serif';
-                targetCtx.fillText(document.getElementById('destInputTrain').value, 285, 60);
-                targetCtx.font = 'italic 18px Arial, sans-serif';
-                targetCtx.fillText("Stacje pośrednie / Via stations:", 285, 170);
-                targetCtx.font = 'bold 26px Arial, sans-serif';
-                wrapText(targetCtx, document.getElementById('viaInput').value, 285, 205, width - 310, 36);
-                targetCtx.font = 'italic 18px Arial, sans-serif';
-                targetCtx.fillText("Nazwa / Name", 285, 420);
-                targetCtx.font = 'bold 26px Arial, sans-serif';
-                targetCtx.fillText(document.getElementById('trainNameInput').value, 285, 445);
+                const paddingX = leftPanelW + 40;
+                
+                targetCtx.font = 'italic 24px "Oswald", Arial, sans-serif';
+                targetCtx.fillText("Stacja docelowa / Destination:", paddingX, 40);
+                
+                targetCtx.font = 'bold 100px "Oswald", Arial, sans-serif';
+                targetCtx.fillText(document.getElementById('destInputTrain').value, paddingX, 70);
+                
+                targetCtx.font = 'italic 24px "Oswald", Arial, sans-serif';
+                targetCtx.fillText("Stacje pośrednie / Via stations:", paddingX, 210);
+                
+                targetCtx.font = 'bold 32px "Oswald", Arial, sans-serif';
+                wrapText(targetCtx, document.getElementById('viaInput').value, paddingX, 250, width - paddingX - 40, 45);
+                
+                targetCtx.font = 'italic 24px "Oswald", Arial, sans-serif';
+                targetCtx.fillText("Kategoria i Nazwa / Train Name", paddingX, 500);
+                targetCtx.font = 'bold 35px "Oswald", Arial, sans-serif';
+                targetCtx.fillText(document.getElementById('trainNameInput').value, paddingX, 530);
 
             } else if (currentSubMode === 'dir') {
-                // --- AUTOBUS KIERUNKOWY ---
+                // --- AUTOBUS KIERUNKOWY (SZERSZY, BARDZIEJ REALISTYCZNY) ---
                 const ledColor = document.getElementById('colorInput').value;
-                targetCtx.fillStyle = '#0a0a0a';
+                targetCtx.fillStyle = '#050505'; // Tło tablicy (prawie czarne)
                 targetCtx.fillRect(0, 0, width, height);
+                
+                // Rysowanie "zgaszonych" diod w tle (bardzo ciemny odcień wybranego koloru)
                 targetCtx.fillStyle = ledColor;
-                targetCtx.shadowColor = ledColor;
-                targetCtx.shadowBlur = 15; 
-                targetCtx.textBaseline = 'middle';
-                targetCtx.font = 'bold 110px "DotGothic16", monospace';
-                targetCtx.textAlign = 'center';
-                targetCtx.fillText(document.getElementById('lineInput').value, 110, height / 2 + 5);
-                targetCtx.font = '110px "DotGothic16", monospace';
-                targetCtx.textAlign = 'center'; 
-                targetCtx.fillText(document.getElementById('destInputBus').value.toUpperCase(), width / 2 + 80, height / 2 + 5);
+                targetCtx.globalAlpha = 0.05;
+                targetCtx.fillRect(0, 0, width, height);
+                targetCtx.globalAlpha = 1.0;
 
-                targetCtx.shadowBlur = 0;
-                targetCtx.fillStyle = '#000000';
-                for (let y = 0; y < height; y += 7) targetCtx.fillRect(0, y, width, 2);
-                for (let x = 0; x < width; x += 7) targetCtx.fillRect(x, 0, 2, height);
+                targetCtx.fillStyle = ledColor;
+                // Bardziej miękki i szerszy bloom/glow dla światła LED
+                targetCtx.shadowColor = ledColor;
+                targetCtx.shadowBlur = 25; 
+                targetCtx.textBaseline = 'middle';
+                
+                // LINIA - Duża, wycentrowana z lewej strony
+                targetCtx.font = 'bold 150px "DotGothic16", monospace';
+                targetCtx.textAlign = 'center';
+                targetCtx.fillText(document.getElementById('lineInput').value, 180, height / 2 + 5);
+                
+                // KIERUNEK - Większy obszar
+                targetCtx.font = '140px "DotGothic16", monospace';
+                targetCtx.textAlign = 'left';
+                // Aby długi tekst się skalował, ograniczamy jego max szerokość
+                targetCtx.fillText(document.getElementById('destInputBus').value.toUpperCase(), 380, height / 2 + 5, width - 420);
+
+                // Nałożenie fizycznej siatki pikseli
+                drawLEDGrid(targetCtx, width, height);
 
             } else {
-                // --- SYSTEM INFORMACJI DYNAMICZNEJ (SIP - SZERSZY) ---
-                targetCtx.fillStyle = '#060606';
+                // --- SYSTEM INFORMACJI PISAŻERSKIEJ (SIP - SZERSZY, 800px wys) ---
+                targetCtx.fillStyle = '#030303';
                 targetCtx.fillRect(0, 0, width, height);
                 targetCtx.textBaseline = 'top';
-
                 targetCtx.shadowBlur = 0;
+
+                // Logo miasta
                 if (customCrestImage) {
-                    // Rysowanie wczytanego z pliku godła
-                    targetCtx.drawImage(customCrestImage, 30, 20, 75, 80);
+                    targetCtx.drawImage(customCrestImage, 40, 30, 90, 100);
                 } else {
-                    // Domyślny zastępczy kształt godła
                     targetCtx.fillStyle = '#ffffff';
-                    targetCtx.fillRect(30, 20, 70, 75);
+                    targetCtx.fillRect(40, 30, 90, 100);
                     targetCtx.fillStyle = '#e74c3c';
-                    targetCtx.fillRect(40, 30, 50, 55);
+                    targetCtx.fillRect(55, 45, 60, 70);
                 }
 
                 // Nazwa Przystanku
                 const cyan = '#42cbf5';
                 targetCtx.fillStyle = cyan;
                 targetCtx.shadowColor = cyan;
-                targetCtx.shadowBlur = 10;
+                targetCtx.shadowBlur = 15;
                 targetCtx.textAlign = 'center';
-                targetCtx.font = '65px "DotGothic16", monospace';
-                targetCtx.fillText(document.getElementById('sipStopName').value, width / 2, 25);
+                targetCtx.font = '80px "DotGothic16", monospace';
+                targetCtx.fillText(document.getElementById('sipStopName').value, width / 2, 40);
 
                 // Zegar
                 const orange = '#ff9500';
                 targetCtx.fillStyle = orange;
                 targetCtx.shadowColor = orange;
                 targetCtx.textAlign = 'right';
-                targetCtx.font = '80px "DotGothic16", monospace';
-                targetCtx.fillText(document.getElementById('sipTime').value, width - 30, 15);
+                targetCtx.font = '95px "DotGothic16", monospace';
+                targetCtx.fillText(document.getElementById('sipTime').value, width - 40, 30);
 
                 // Nagłówki kolumn
                 const headerCol = '#9dc6e8';
                 targetCtx.fillStyle = headerCol;
                 targetCtx.shadowColor = headerCol;
-                targetCtx.font = '45px "DotGothic16", monospace';
+                targetCtx.font = '50px "DotGothic16", monospace';
                 targetCtx.textAlign = 'left';
-                targetCtx.fillText("Linia", 30, 130);
-                targetCtx.fillText("Kierunek", 230, 130);
+                targetCtx.fillText("Linia", 40, 170);
+                targetCtx.fillText("Kierunek", 280, 170);
                 targetCtx.textAlign = 'right';
-                targetCtx.fillText("Odjazd", width - 30, 130);
+                targetCtx.fillText("Odjazd", width - 40, 170);
 
-                // 4 Rzędy odjazdów
+                // 4 Rzędy odjazdów - luźniej rozstawione (wysokość 800px daje dużo miejsca)
                 const yellow = '#ffcc00';
                 targetCtx.fillStyle = yellow;
                 targetCtx.shadowColor = yellow;
-                targetCtx.font = '55px "DotGothic16", monospace';
+                targetCtx.font = '70px "DotGothic16", monospace';
                 for (let i = 1; i <= 4; i++) {
-                    let y = 145 + i * 65;
+                    let y = 160 + i * 90; // Duże odstępy
                     targetCtx.textAlign = 'center';
-                    targetCtx.fillText(document.getElementById('sipL'+i).value, 80, y);
+                    targetCtx.fillText(document.getElementById('sipL'+i).value, 110, y);
                     targetCtx.textAlign = 'left';
-                    targetCtx.fillText(document.getElementById('sipD'+i).value, 230, y);
+                    targetCtx.fillText(document.getElementById('sipD'+i).value, 280, y);
                     targetCtx.textAlign = 'right';
-                    targetCtx.fillText(document.getElementById('sipT'+i).value, width - 30, y);
+                    targetCtx.fillText(document.getElementById('sipT'+i).value, width - 40, y);
                 }
 
-                // Dolny pasek informacyjny
+                // Dolny pasek (Ticker)
                 const green = '#2ecc71';
                 targetCtx.fillStyle = green;
                 targetCtx.shadowColor = green;
                 targetCtx.textAlign = 'center';
-                targetCtx.font = '45px "DotGothic16", monospace';
-                targetCtx.fillText(document.getElementById('sipTicker').value, width / 2, 505);
+                targetCtx.font = '60px "DotGothic16", monospace';
+                targetCtx.fillText(document.getElementById('sipTicker').value, width / 2, 700);
 
-                // Siatka LED
-                targetCtx.shadowBlur = 0;
-                targetCtx.fillStyle = '#000000';
-                for (let y = 0; y < height; y += 5) targetCtx.fillRect(0, y, width, 2);
-                for (let x = 0; x < width; x += 5) targetCtx.fillRect(x, 0, 2, height);
+                // Nałożenie fizycznej siatki pikseli
+                drawLEDGrid(targetCtx, width, height);
             }
+
+            targetCtx.restore();
         }
 
         function drawBoard() {
@@ -616,6 +708,7 @@
             drawToContext(modalCtx);
         }
 
+        // Eventy aktualizujące canvas w locie
         const inputs = document.querySelectorAll('input, textarea');
         inputs.forEach(input => {
             if(input.type !== 'file') {
@@ -623,36 +716,27 @@
             }
         });
 
-        document.getElementById('lineInput').addEventListener('input', function(e) {
-            if (currentMainMode === 'bus' && currentSubMode === 'dir') {
-                if (e.target.value.length > 3) e.target.value = e.target.value.substring(0, 3);
-            }
-        });
+        // Otwieranie / Zamykanie podglądu (Modal)
+        function openModal() { modalOverlay.style.display = 'flex'; drawToContext(modalCtx); }
+        function closeModal() { modalOverlay.style.display = 'none'; }
 
-        function openModal() {
-            modalOverlay.style.display = 'flex';
-            drawToContext(modalCtx);
-        }
-        function closeModal() {
-            modalOverlay.style.display = 'none';
-        }
-
+        // Pobieranie obrazka
         function downloadImage() {
             canvas.toBlob(function(blob) {
                 if (!blob) return alert("Błąd generowania obrazu.");
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                let fileName = "tablica.png";
+                let fileName = "tablica_PRO.png";
                 
                 if (currentMainMode === 'train') {
                     const safeDest = document.getElementById('destInputTrain').value.replace(/[^a-zA-Z0-9]/g, '_');
-                    fileName = `kolej_${safeDest}.png`;
+                    fileName = `kolej_${safeDest}_8K.png`;
                 } else if (currentSubMode === 'dir') {
                     const safeLine = document.getElementById('lineInput').value.replace(/[^a-zA-Z0-9]/g, '');
-                    fileName = `autobus_pojazd_${safeLine}.png`;
+                    fileName = `autobus_linia_${safeLine}_8K.png`;
                 } else {
                     const safeStop = document.getElementById('sipStopName').value.replace(/[^a-zA-Z0-9]/g, '_');
-                    fileName = `autobus_przystanek_${safeStop}.png`;
+                    fileName = `przystanek_${safeStop}_8K.png`;
                 }
                 
                 link.download = fileName;
@@ -664,7 +748,10 @@
             }, 'image/png');
         }
 
+        // Inicjalizacja domyślnego trybu
         setMainMode('bus'); 
+        
+        // Poczekaj na wczytanie czcionek z Google Fonts przed pierwszym narysowaniem
         document.fonts.ready.then(drawBoard);
     </script>
 </body>
