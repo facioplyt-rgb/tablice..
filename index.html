@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -125,15 +124,10 @@
             box-sizing: border-box;
         }
 
-        /* Lepszy układ za pomocą CSS Grid */
         .controls-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
-        }
-
-        .controls-grid.full-width {
-            grid-template-columns: 1fr;
         }
 
         .input-group {
@@ -328,7 +322,7 @@
                 <input type="text" id="lineInput" value="123" maxlength="4">
             </div>
             <div class="input-group" style="grid-column: span 2;">
-                <label>Kierunek (bardzo długi tekst się zmieści):</label>
+                <label>Kierunek (długi tekst się dostosuje):</label>
                 <input type="text" id="destInputBus" value="DWORZEC GŁÓWNY - HALA">
             </div>
             <div class="input-group">
@@ -341,44 +335,44 @@
         <div id="controlsBusSip" class="controls-grid" style="display: none;">
             <div class="input-group" style="grid-column: span 2;">
                 <label>Nazwa Przystanku:</label>
-                <input type="text" id="sipStopName" value="Rondo Radosława">
+                <input type="text" id="sipStopName" value="Fieldorfa-Nila">
             </div>
             <div class="input-group">
                 <label>Zegar:</label>
                 <input type="text" id="sipTime" value="14:53">
             </div>
             <div class="input-group" style="grid-column: span 3;">
-                <label>Logo/Herb miasta (opcjonalnie):</label>
+                <label>Logo/Herb miasta (zastąpi domyślny):</label>
                 <input type="file" id="crestInput" accept="image/*">
             </div>
             
             <div class="section-title">Najbliższe odjazdy:</div>
             <div style="grid-column: 1 / -1;">
                 <div class="sip-row">
-                    <input type="text" id="sipL1" value="17" placeholder="Linia">
-                    <input type="text" id="sipD1" value="Winnica" placeholder="Kierunek">
+                    <input type="text" id="sipL1" value="1" placeholder="Linia">
+                    <input type="text" id="sipD1" value="Wieprzyce PKP" placeholder="Kierunek">
                     <input type="text" id="sipT1" value="3 min" placeholder="Czas">
                 </div>
                 <div class="sip-row">
-                    <input type="text" id="sipL2" value="33" placeholder="Linia">
-                    <input type="text" id="sipD2" value="Metro Młociny" placeholder="Kierunek">
+                    <input type="text" id="sipL2" value="4" placeholder="Linia">
+                    <input type="text" id="sipD2" value="Dworzec Główny" placeholder="Kierunek">
                     <input type="text" id="sipT2" value="7 min" placeholder="Czas">
                 </div>
                 <div class="sip-row">
-                    <input type="text" id="sipL3" value="41" placeholder="Linia">
-                    <input type="text" id="sipD3" value="Żerań FSO" placeholder="Kierunek">
+                    <input type="text" id="sipL3" value="3" placeholder="Linia">
+                    <input type="text" id="sipD3" value="Piaski" placeholder="Kierunek">
                     <input type="text" id="sipT3" value="12 min" placeholder="Czas">
                 </div>
                 <div class="sip-row">
-                    <input type="text" id="sipL4" value="17" placeholder="Linia">
-                    <input type="text" id="sipD4" value="Winnica" placeholder="Kierunek">
+                    <input type="text" id="sipL4" value="1" placeholder="Linia">
+                    <input type="text" id="sipD4" value="Wieprzyce PKP" placeholder="Kierunek">
                     <input type="text" id="sipT4" value="15 min" placeholder="Czas">
                 </div>
             </div>
 
             <div class="input-group" style="grid-column: span 3; margin-top: 10px;">
                 <label>Pasek informacyjny (Dolny Ticker):</label>
-                <input type="text" id="sipTicker" value=">> ZMIANA ROZKŁADU JAZDY OD 1 WRZEŚNIA <<">
+                <input type="text" id="sipTicker" value="Jakość powietrza bardzo dobra =)">
             </div>
         </div>
 
@@ -431,11 +425,13 @@
         let currentMainMode = 'bus'; 
         let currentSubMode = 'dir'; 
         let customCrestImage = null; 
+        let defaultCrestImage = null;
 
-        // MNOŻNIK 8K (im wyższy, tym ostrzejszy plik końcowy)
-        const SCALE = 8; 
+        // MAKSYMALNY WYMIAR W PIKSELACH (Limit 8K)
+        const MAX_DIMENSION = 8000; 
+        let currentScale = 1; 
 
-        // Ładowanie obrazka (herbu)
+        // Ładowanie obrazka użytkownika (nadpisze herb Gorzowa)
         document.getElementById('crestInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -472,7 +468,6 @@
             document.getElementById('controlsBusSip').style.display = 'none';
             document.getElementById('controlsTrain').style.display = 'none';
 
-            // Nowe, SZERSZE rozdzielczości logiczne
             let targetRatio, w, h;
 
             if (currentMainMode === 'train') {
@@ -488,13 +483,16 @@
                 }
             }
 
-            // Aplikowanie fizycznych pikseli (Wymiary * 8K)
-            canvas.width = w * SCALE; 
-            canvas.height = h * SCALE; 
+            // Automatyczne skalowanie do max 8000px na najdłuższym boku
+            currentScale = Math.min(MAX_DIMENSION / w, MAX_DIMENSION / h);
+
+            // Aplikowanie fizycznych pikseli
+            canvas.width = w * currentScale; 
+            canvas.height = h * currentScale; 
             canvas.style.aspectRatio = targetRatio;
             
-            modalCanvas.width = w * SCALE; 
-            modalCanvas.height = h * SCALE; 
+            modalCanvas.width = w * currentScale; 
+            modalCanvas.height = h * currentScale; 
             modalCanvas.style.aspectRatio = targetRatio;
 
             // Zapisujemy logiczne wymiary do kontekstu
@@ -525,18 +523,16 @@
 
         // Rysowanie realistycznej siatki LED
         function drawLEDGrid(targetCtx, w, h) {
-            const step = 6; // Wielkość jednej diody
+            const step = 6; 
             targetCtx.shadowBlur = 0;
             targetCtx.lineWidth = 1.5;
-            targetCtx.strokeStyle = 'rgba(0, 0, 0, 0.85)'; // Ciemna siatka maskująca świecenie
+            targetCtx.strokeStyle = 'rgba(0, 0, 0, 0.85)'; 
             
             targetCtx.beginPath();
-            // Linie pionowe
             for (let x = 0; x <= w; x += step) {
                 targetCtx.moveTo(x, 0);
                 targetCtx.lineTo(x, h);
             }
-            // Linie poziome
             for (let y = 0; y <= h; y += step) {
                 targetCtx.moveTo(0, y);
                 targetCtx.lineTo(w, y);
@@ -549,24 +545,21 @@
             const height = targetCtx.canvas.logicalH;
 
             targetCtx.save();
-            targetCtx.scale(SCALE, SCALE);
+            targetCtx.scale(currentScale, currentScale);
 
             if (currentMainMode === 'train') {
-                // --- KOLEJ PKP (NOWY SZERSZY UKŁAD) ---
-                targetCtx.fillStyle = '#1e5088'; // Typowy niebieski PKP
+                // --- KOLEJ PKP ---
+                targetCtx.fillStyle = '#1e5088'; 
                 targetCtx.fillRect(0, 0, width, height);
 
-                const leftPanelW = 350; // Szerszy lewy panel
+                const leftPanelW = 350; 
                 targetCtx.fillStyle = '#11355e';
                 targetCtx.fillRect(0, 0, leftPanelW, height);
                 
-                // Pasek oddzielający
                 targetCtx.fillStyle = '#ffffff';
                 targetCtx.fillRect(leftPanelW, 20, 4, height - 40);
-                
                 targetCtx.textBaseline = 'top';
 
-                // LEWY PANEL (Czas i przewoźnik)
                 targetCtx.font = 'bold 120px "Oswald", Arial, sans-serif';
                 targetCtx.textAlign = 'center';
                 targetCtx.fillText(document.getElementById('timeInput').value, leftPanelW / 2, 70);
@@ -576,7 +569,6 @@
                 targetCtx.font = 'bold 30px "Oswald", Arial, sans-serif';
                 targetCtx.fillText(document.getElementById('operatorInput').value, leftPanelW / 2, 530);
 
-                // PRAWY PANEL (Szczegóły pociągu)
                 targetCtx.textAlign = 'left';
                 const paddingX = leftPanelW + 40;
                 
@@ -598,47 +590,44 @@
                 targetCtx.fillText(document.getElementById('trainNameInput').value, paddingX, 530);
 
             } else if (currentSubMode === 'dir') {
-                // --- AUTOBUS KIERUNKOWY (SZERSZY, BARDZIEJ REALISTYCZNY) ---
+                // --- AUTOBUS KIERUNKOWY ---
                 const ledColor = document.getElementById('colorInput').value;
-                targetCtx.fillStyle = '#050505'; // Tło tablicy (prawie czarne)
+                targetCtx.fillStyle = '#050505'; 
                 targetCtx.fillRect(0, 0, width, height);
                 
-                // Rysowanie "zgaszonych" diod w tle (bardzo ciemny odcień wybranego koloru)
                 targetCtx.fillStyle = ledColor;
                 targetCtx.globalAlpha = 0.05;
                 targetCtx.fillRect(0, 0, width, height);
                 targetCtx.globalAlpha = 1.0;
 
                 targetCtx.fillStyle = ledColor;
-                // Bardziej miękki i szerszy bloom/glow dla światła LED
                 targetCtx.shadowColor = ledColor;
                 targetCtx.shadowBlur = 25; 
                 targetCtx.textBaseline = 'middle';
                 
-                // LINIA - Duża, wycentrowana z lewej strony
                 targetCtx.font = 'bold 150px "DotGothic16", monospace';
                 targetCtx.textAlign = 'center';
                 targetCtx.fillText(document.getElementById('lineInput').value, 180, height / 2 + 5);
                 
-                // KIERUNEK - Większy obszar
                 targetCtx.font = '140px "DotGothic16", monospace';
                 targetCtx.textAlign = 'left';
-                // Aby długi tekst się skalował, ograniczamy jego max szerokość
                 targetCtx.fillText(document.getElementById('destInputBus').value.toUpperCase(), 380, height / 2 + 5, width - 420);
 
-                // Nałożenie fizycznej siatki pikseli
                 drawLEDGrid(targetCtx, width, height);
 
             } else {
-                // --- SYSTEM INFORMACJI PISAŻERSKIEJ (SIP - SZERSZY, 800px wys) ---
+                // --- SYSTEM INFORMACJI PASAŻERSKIEJ (SIP) ---
                 targetCtx.fillStyle = '#030303';
                 targetCtx.fillRect(0, 0, width, height);
                 targetCtx.textBaseline = 'top';
                 targetCtx.shadowBlur = 0;
 
-                // Logo miasta
-                if (customCrestImage) {
-                    targetCtx.drawImage(customCrestImage, 40, 30, 90, 100);
+                // Logo miasta (Priorytet obrazek wgrywany, potem domyślny herb Gorzowa)
+                const activeCrest = customCrestImage || defaultCrestImage; 
+                
+                if (activeCrest) {
+                    // Lekko wydłużona proporcja dla herbu Gorzowa Wlkp.
+                    targetCtx.drawImage(activeCrest, 40, 30, 90, 110);
                 } else {
                     targetCtx.fillStyle = '#ffffff';
                     targetCtx.fillRect(40, 30, 90, 100);
@@ -674,13 +663,13 @@
                 targetCtx.textAlign = 'right';
                 targetCtx.fillText("Odjazd", width - 40, 170);
 
-                // 4 Rzędy odjazdów - luźniej rozstawione (wysokość 800px daje dużo miejsca)
+                // Odjazdy
                 const yellow = '#ffcc00';
                 targetCtx.fillStyle = yellow;
                 targetCtx.shadowColor = yellow;
                 targetCtx.font = '70px "DotGothic16", monospace';
                 for (let i = 1; i <= 4; i++) {
-                    let y = 160 + i * 90; // Duże odstępy
+                    let y = 160 + i * 90; 
                     targetCtx.textAlign = 'center';
                     targetCtx.fillText(document.getElementById('sipL'+i).value, 110, y);
                     targetCtx.textAlign = 'left';
@@ -689,7 +678,7 @@
                     targetCtx.fillText(document.getElementById('sipT'+i).value, width - 40, y);
                 }
 
-                // Dolny pasek (Ticker)
+                // Pasek informacyjny
                 const green = '#2ecc71';
                 targetCtx.fillStyle = green;
                 targetCtx.shadowColor = green;
@@ -697,7 +686,6 @@
                 targetCtx.font = '60px "DotGothic16", monospace';
                 targetCtx.fillText(document.getElementById('sipTicker').value, width / 2, 700);
 
-                // Nałożenie fizycznej siatki pikseli
                 drawLEDGrid(targetCtx, width, height);
             }
 
@@ -709,7 +697,7 @@
             drawToContext(modalCtx);
         }
 
-        // Eventy aktualizujące canvas w locie
+        // Eventy inputów
         const inputs = document.querySelectorAll('input, textarea');
         inputs.forEach(input => {
             if(input.type !== 'file') {
@@ -717,11 +705,9 @@
             }
         });
 
-        // Otwieranie / Zamykanie podglądu (Modal)
         function openModal() { modalOverlay.style.display = 'flex'; drawToContext(modalCtx); }
         function closeModal() { modalOverlay.style.display = 'none'; }
 
-        // Pobieranie obrazka
         function downloadImage() {
             canvas.toBlob(function(blob) {
                 if (!blob) return alert("Błąd generowania obrazu.");
@@ -749,10 +735,17 @@
             }, 'image/png');
         }
 
-        // Inicjalizacja domyślnego trybu
+        // --- INICJALIZACJA APLIKACJI ---
         setMainMode('bus'); 
         
-        // Poczekaj na wczytanie czcionek z Google Fonts przed pierwszym narysowaniem
+        // Ładowanie domyślnego herbu Gorzowa
+        const initDefaultCrest = new Image();
+        initDefaultCrest.onload = function() {
+            defaultCrestImage = initDefaultCrest;
+            drawBoard();
+        };
+        initDefaultCrest.src = 'POL_Gorzów_Wielkopolski_COA.svg.webp';
+
         document.fonts.ready.then(drawBoard);
     </script>
 </body>
