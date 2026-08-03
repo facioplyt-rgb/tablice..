@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -148,7 +147,7 @@
             letter-spacing: 0.5px;
         }
 
-        input[type="text"], input[type="file"], textarea, select {
+        input[type="text"], input[type="file"], textarea {
             background-color: var(--bg-color);
             color: var(--text-main);
             padding: 14px;
@@ -159,7 +158,7 @@
             transition: border-color 0.2s;
         }
 
-        input[type="text"]:focus, textarea:focus, select:focus {
+        input[type="text"]:focus, textarea:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
@@ -433,20 +432,13 @@ ROOSEVELTA</textarea>
                 <label>Kategoria i Nazwa pociągu:</label>
                 <input type="text" id="trainNameInput" value="EIP 3104 (Pendolino)">
             </div>
-            <div class="input-group" style="grid-column: span 2;">
-                <label>Komunikat na dolnym czerwonym pasku (ruchomy):</label>
+            <div class="input-group" style="grid-column: span 3;">
+                <label>Komunikat na dolnym czerwonym pasku (na środku):</label>
                 <input type="text" id="trainTickerInput" value="Uwaga! Pociąg jest opóźniony z przyczyn technicznych. Prosimy o zachowanie ostrożności.">
-            </div>
-            <div class="input-group">
-                <label>Wariant pobierania:</label>
-                <select id="exportFormat">
-                    <option value="png">Obraz PNG (8K)</option>
-                    <option value="mp4">Wideo MP4 (Animowane)</option>
-                </select>
             </div>
         </div>
 
-        <button class="download-btn" onclick="downloadImage()">Pobierz jako Plik (Wysoka Jakość 8K)</button>
+        <button class="download-btn" onclick="downloadImage()">Pobierz jako Plik PNG (Wysoka Jakość 8K)</button>
     </div>
 
     <div class="canvas-container" onclick="openModal()">
@@ -471,7 +463,6 @@ ROOSEVELTA</textarea>
         let currentSubMode = 'dir'; 
         let customCrestImage = null; 
         let defaultCrestImage = null;
-        let tickerOffset = 0;
 
         const MAX_DIMENSION = 7680; 
         let currentScale = 1; 
@@ -662,23 +653,15 @@ ROOSEVELTA</textarea>
                 targetCtx.fillStyle = '#ffffff';
                 targetCtx.fillText(document.getElementById('trainNameInput').value, paddingX, 440);
 
-                // Czerwony ruchomy pasek na dole
+                // Czerwony pasek na dole ze statycznym tekstem na środku
                 targetCtx.fillStyle = '#dc2626';
                 targetCtx.fillRect(0, height - 55, width, 55);
                 
                 targetCtx.fillStyle = '#ffffff';
                 targetCtx.font = '700 28px "Roboto", Arial, sans-serif';
                 targetCtx.textBaseline = 'middle';
-                targetCtx.save();
-                targetCtx.beginPath();
-                targetCtx.rect(0, height - 55, width, 55);
-                targetCtx.clip();
-                
-                const trainTickerVal = document.getElementById('trainTickerInput').value;
-                let textWidth = targetCtx.measureText(trainTickerVal).width;
-                let renderX = width - (tickerOffset % (textWidth + width));
-                targetCtx.fillText(trainTickerVal, renderX, height - 27.5);
-                targetCtx.restore();
+                targetCtx.textAlign = 'center';
+                targetCtx.fillText(document.getElementById('trainTickerInput').value, width / 2, height - 27.5);
                 targetCtx.textBaseline = 'top';
 
             } else if (currentSubMode === 'dir') {
@@ -876,17 +859,7 @@ ROOSEVELTA</textarea>
             drawToContext(modalCtx);
         }
 
-        // Pętla animacji dla ruchomego paska w trybie kolejowym
-        function animationLoop() {
-            if (currentMainMode === 'train') {
-                tickerOffset += 3;
-                drawBoard();
-            }
-            requestAnimationFrame(animationLoop);
-        }
-        requestAnimationFrame(animationLoop);
-
-        const inputs = document.querySelectorAll('input, textarea, select');
+        const inputs = document.querySelectorAll('input, textarea');
         inputs.forEach(input => {
             if(input.type !== 'file') {
                 input.addEventListener('input', drawBoard);
@@ -898,16 +871,6 @@ ROOSEVELTA</textarea>
         function closeModal() { modalOverlay.style.display = 'none'; }
 
         function downloadImage() {
-            const format = document.getElementById('exportFormat') ? document.getElementById('exportFormat').value : 'png';
-            
-            if (currentMainMode === 'train' && format === 'mp4') {
-                recordAndDownloadVideo();
-            } else {
-                downloadStaticPNG();
-            }
-        }
-
-        function downloadStaticPNG() {
             canvas.toBlob(function(blob) {
                 if (!blob) return alert("Błąd generowania obrazu.");
                 const url = URL.createObjectURL(blob);
@@ -935,47 +898,6 @@ ROOSEVELTA</textarea>
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
             }, 'image/png');
-        }
-
-        function recordAndDownloadVideo() {
-            const stream = canvas.captureStream(30);
-            let recorder;
-            try {
-                recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
-            } catch (e) {
-                try {
-                    recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-                } catch (err) {
-                    alert('Twoja przeglądarka nie obsługuje nagrywania wideo z płótna.');
-                    return;
-                }
-            }
-
-            let chunks = [];
-            recorder.ondataavailable = function(e) {
-                if (e.data.size > 0) chunks.push(e.data);
-            };
-
-            recorder.onstop = function() {
-                const blob = new Blob(chunks, { type: 'video/mp4' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                const safeDest = document.getElementById('destInputTrain').value.replace(/[^a-zA-Z0-9]/g, '_');
-                link.download = `kolej_${safeDest}_animacja.mp4`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                alert('Nagrywanie wideo MP4 zakończone pomyślnie!');
-            };
-
-            recorder.start();
-            alert('Rozpoczęto nagrywanie wideo animacji (trwa 5 sekund)... Nie zamykaj karty.');
-            
-            setTimeout(() => {
-                recorder.stop();
-            }, 5000);
         }
 
         setMainMode('bus'); 
