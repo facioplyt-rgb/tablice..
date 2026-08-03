@@ -6,7 +6,7 @@
     <title>Generator Tablic Informacyjnych PRO</title>
     
     <!-- Pobranie nowoczesnych czcionek -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=DotGothic16&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=DotGothic16&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -91,13 +91,16 @@
             margin-bottom: 25px;
             width: 100%;
             max-width: 900px;
+            flex-wrap: wrap;
         }
 
         .sub-tab-btn {
             flex: 1;
+            min-width: 150px;
             padding: 12px;
             font-size: 14px;
             font-weight: 600;
+            text-align: center;
             background-color: var(--panel-bg);
             color: var(--text-muted);
             border: 1px solid var(--border);
@@ -309,13 +312,14 @@
 
     <!-- Podmenu dla Autobusu -->
     <div class="sub-tabs" id="subModeBus">
-        <div class="sub-tab-btn active" id="btnBusDir" onclick="setSubMode('dir')">Kierunkowa (Pojazd)</div>
-        <div class="sub-tab-btn" id="btnBusSip" onclick="setSubMode('sip')">System Informacji Pasażerskiej (Przystanek)</div>
+        <div class="sub-tab-btn active" id="btnBusDir" onclick="setSubMode('dir')">Kierunkowa Zewn. (LED)</div>
+        <div class="sub-tab-btn" id="btnBusSip" onclick="setSubMode('sip')">Przystankowa (SIP)</div>
+        <div class="sub-tab-btn" id="btnBusLcd" onclick="setSubMode('lcd')">Ekran Wewn. (LCD)</div>
     </div>
 
     <div class="controls-container">
         
-        <!-- 1. TABLICA KIERUNKOWA POJAZDU -->
+        <!-- 1. TABLICA KIERUNKOWA POJAZDU (LED) -->
         <div id="controlsBusDir" class="controls-grid" style="display: none;">
             <div class="input-group">
                 <label>Linia (max 4 znaki):</label>
@@ -376,7 +380,40 @@
             </div>
         </div>
 
-        <!-- 3. TABLICA KOLEJOWA PKP -->
+        <!-- 3. EKRAN WEWNĘTRZNY LCD (NOWY) -->
+        <div id="controlsBusLcd" class="controls-grid" style="display: none;">
+            <div class="input-group">
+                <label>Linia:</label>
+                <input type="text" id="lcdLine" value="3">
+            </div>
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Kierunek (Prawy górny róg):</label>
+                <input type="text" id="lcdDest" value="FIELDORFA NILA">
+            </div>
+            <div class="input-group" style="grid-column: span 3;">
+                <label>Tekst na żółtym pasku (np. Przystanek):</label>
+                <input type="text" id="lcdSubText" value="Przystanek: Piaski">
+            </div>
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Lista kolejnych przystanków (każdy w nowej linii):</label>
+                <textarea id="lcdStops" rows="6">FIELDORFA NILA
+OSIEDLE PIASKI
+CHWALĘCICE
+PUSZKINA
+PLAC SŁONECZNY
+ROOSEVELTA</textarea>
+            </div>
+            <div class="input-group">
+                <label>Godzina:</label>
+                <input type="text" id="lcdTime" value="5:38">
+            </div>
+            <div class="input-group" style="grid-column: span 3;">
+                <label>Dolny pasek informacyjny:</label>
+                <input type="text" id="lcdTicker" value="Imieniny: Jana i Pawła">
+            </div>
+        </div>
+
+        <!-- 4. TABLICA KOLEJOWA PKP -->
         <div id="controlsTrain" class="controls-grid" style="display: none;">
             <div class="input-group">
                 <label>Godzina Odjazdu:</label>
@@ -427,8 +464,8 @@
         let customCrestImage = null; 
         let defaultCrestImage = null;
 
-        // MAKSYMALNY WYMIAR W PIKSELACH (Limit 8K)
-        const MAX_DIMENSION = 8000; 
+        // TWARDY LIMIT WYMIARU (Standardowe 8K UHD)
+        const MAX_DIMENSION = 7680; 
         let currentScale = 1; 
 
         // Ładowanie obrazka użytkownika (nadpisze herb Gorzowa)
@@ -453,19 +490,26 @@
             document.getElementById('btnBus').className = mode === 'bus' ? 'tab-btn active-bus' : 'tab-btn';
             document.getElementById('btnTrain').className = mode === 'train' ? 'tab-btn active-train' : 'tab-btn';
             document.getElementById('subModeBus').style.display = mode === 'bus' ? 'flex' : 'none';
-            updateUI();
+            // Default to first sub-mode when switching main modes
+            if(mode === 'train') {
+                updateUI();
+            } else {
+                setSubMode('dir');
+            }
         }
 
         function setSubMode(mode) {
             currentSubMode = mode;
             document.getElementById('btnBusDir').className = mode === 'dir' ? 'sub-tab-btn active' : 'sub-tab-btn';
             document.getElementById('btnBusSip').className = mode === 'sip' ? 'sub-tab-btn active' : 'sub-tab-btn';
+            document.getElementById('btnBusLcd').className = mode === 'lcd' ? 'sub-tab-btn active' : 'sub-tab-btn';
             updateUI();
         }
 
         function updateUI() {
             document.getElementById('controlsBusDir').style.display = 'none';
             document.getElementById('controlsBusSip').style.display = 'none';
+            document.getElementById('controlsBusLcd').style.display = 'none';
             document.getElementById('controlsTrain').style.display = 'none';
 
             let targetRatio, w, h;
@@ -477,32 +521,37 @@
                 if (currentSubMode === 'dir') {
                     document.getElementById('controlsBusDir').style.display = 'grid';
                     w = 1600; h = 300; targetRatio = "16 / 3";
-                } else {
+                } else if (currentSubMode === 'sip') {
                     document.getElementById('controlsBusSip').style.display = 'grid';
                     w = 1600; h = 800; targetRatio = "2 / 1";
+                } else if (currentSubMode === 'lcd') {
+                    document.getElementById('controlsBusLcd').style.display = 'grid';
+                    // Typowa rozdzielczość monitora (16:9)
+                    w = 1920; h = 1080; targetRatio = "16 / 9";
                 }
             }
 
-            // Automatyczne skalowanie do max 8000px na najdłuższym boku
-            currentScale = Math.min(MAX_DIMENSION / w, MAX_DIMENSION / h);
+            // --- TWARDE OGRANICZENIE DO MAX 7680px ---
+            currentScale = Math.floor(MAX_DIMENSION / Math.max(w, h));
+            if (currentScale < 1) currentScale = 1; 
 
-            // Aplikowanie fizycznych pikseli
-            canvas.width = w * currentScale; 
-            canvas.height = h * currentScale; 
+            const finalWidth = w * currentScale;
+            const finalHeight = h * currentScale;
+
+            canvas.width = finalWidth; 
+            canvas.height = finalHeight; 
             canvas.style.aspectRatio = targetRatio;
             
-            modalCanvas.width = w * currentScale; 
-            modalCanvas.height = h * currentScale; 
+            modalCanvas.width = finalWidth; 
+            modalCanvas.height = finalHeight; 
             modalCanvas.style.aspectRatio = targetRatio;
 
-            // Zapisujemy logiczne wymiary do kontekstu
             canvas.logicalW = w; canvas.logicalH = h;
             modalCanvas.logicalW = w; modalCanvas.logicalH = h;
             
             drawBoard();
         }
 
-        // Funkcja łamiąca długi tekst na wiele linii
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const words = text.split(/(?=[,\s])/); 
             let line = '';
@@ -521,7 +570,6 @@
             context.fillText(line.trim(), x, y);
         }
 
-        // Rysowanie realistycznej siatki LED
         function drawLEDGrid(targetCtx, w, h) {
             const step = 6; 
             targetCtx.shadowBlur = 0;
@@ -590,7 +638,7 @@
                 targetCtx.fillText(document.getElementById('trainNameInput').value, paddingX, 530);
 
             } else if (currentSubMode === 'dir') {
-                // --- AUTOBUS KIERUNKOWY ---
+                // --- AUTOBUS KIERUNKOWY LED ---
                 const ledColor = document.getElementById('colorInput').value;
                 targetCtx.fillStyle = '#050505'; 
                 targetCtx.fillRect(0, 0, width, height);
@@ -615,18 +663,16 @@
 
                 drawLEDGrid(targetCtx, width, height);
 
-            } else {
-                // --- SYSTEM INFORMACJI PASAŻERSKIEJ (SIP) ---
+            } else if (currentSubMode === 'sip') {
+                // --- PRZYSTANEK (SIP) ---
                 targetCtx.fillStyle = '#030303';
                 targetCtx.fillRect(0, 0, width, height);
                 targetCtx.textBaseline = 'top';
                 targetCtx.shadowBlur = 0;
 
-                // Logo miasta (Priorytet obrazek wgrywany, potem domyślny herb Gorzowa)
                 const activeCrest = customCrestImage || defaultCrestImage; 
                 
                 if (activeCrest) {
-                    // Lekko wydłużona proporcja dla herbu Gorzowa Wlkp.
                     targetCtx.drawImage(activeCrest, 40, 30, 90, 110);
                 } else {
                     targetCtx.fillStyle = '#ffffff';
@@ -635,7 +681,6 @@
                     targetCtx.fillRect(55, 45, 60, 70);
                 }
 
-                // Nazwa Przystanku
                 const cyan = '#42cbf5';
                 targetCtx.fillStyle = cyan;
                 targetCtx.shadowColor = cyan;
@@ -644,7 +689,6 @@
                 targetCtx.font = '80px "DotGothic16", monospace';
                 targetCtx.fillText(document.getElementById('sipStopName').value, width / 2, 40);
 
-                // Zegar
                 const orange = '#ff9500';
                 targetCtx.fillStyle = orange;
                 targetCtx.shadowColor = orange;
@@ -652,7 +696,6 @@
                 targetCtx.font = '95px "DotGothic16", monospace';
                 targetCtx.fillText(document.getElementById('sipTime').value, width - 40, 30);
 
-                // Nagłówki kolumn
                 const headerCol = '#9dc6e8';
                 targetCtx.fillStyle = headerCol;
                 targetCtx.shadowColor = headerCol;
@@ -663,7 +706,6 @@
                 targetCtx.textAlign = 'right';
                 targetCtx.fillText("Odjazd", width - 40, 170);
 
-                // Odjazdy
                 const yellow = '#ffcc00';
                 targetCtx.fillStyle = yellow;
                 targetCtx.shadowColor = yellow;
@@ -678,7 +720,6 @@
                     targetCtx.fillText(document.getElementById('sipT'+i).value, width - 40, y);
                 }
 
-                // Pasek informacyjny
                 const green = '#2ecc71';
                 targetCtx.fillStyle = green;
                 targetCtx.shadowColor = green;
@@ -687,6 +728,111 @@
                 targetCtx.fillText(document.getElementById('sipTicker').value, width / 2, 700);
 
                 drawLEDGrid(targetCtx, width, height);
+                
+            } else if (currentSubMode === 'lcd') {
+                // --- EKRAN WEWNĘTRZNY LCD (TFT) ---
+                
+                // Kolory wyciągnięte ze zdjęcia
+                const colorPink = '#df3c81';
+                const colorYellow = '#d1c14a';
+                const colorBgBlue = '#b6e3ff';
+                const colorTextTeal = '#1f6a73';
+
+                // Tło główne
+                targetCtx.fillStyle = colorBgBlue;
+                targetCtx.fillRect(0, 0, width, height);
+
+                // 1. Górny pasek (Kierunek)
+                targetCtx.fillStyle = colorPink;
+                targetCtx.fillRect(0, 0, width, 160);
+                
+                // Ciemniejszy kwadrat na numer linii (lewa strona górnego paska)
+                targetCtx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // Lekkie przyciemnienie różowego
+                targetCtx.fillRect(0, 0, 250, 160);
+
+                targetCtx.shadowBlur = 0; // Reset cieni
+                targetCtx.fillStyle = '#ffffff';
+                targetCtx.textBaseline = 'middle';
+                
+                // Numer linii
+                targetCtx.textAlign = 'center';
+                targetCtx.font = '900 110px "Inter", sans-serif';
+                targetCtx.fillText(document.getElementById('lcdLine').value, 125, 85);
+                
+                // Kierunek
+                targetCtx.textAlign = 'center';
+                targetCtx.font = '900 90px "Inter", sans-serif';
+                targetCtx.fillText(document.getElementById('lcdDest').value, (width + 250) / 2, 85);
+
+                // 2. Żółty pasek z tekstem pod kierunkiem
+                targetCtx.fillStyle = colorYellow;
+                targetCtx.fillRect(0, 160, width, 70);
+                
+                targetCtx.fillStyle = '#ffffff'; // Tekst na żółtym pasku
+                targetCtx.textAlign = 'left';
+                targetCtx.font = 'bold 45px "Inter", sans-serif';
+                targetCtx.fillText(document.getElementById('lcdSubText').value, 50, 195);
+
+                // 3. Główna treść - termometr (trasa)
+                const stopsText = document.getElementById('lcdStops').value;
+                const stops = stopsText.split('\n').filter(s => s.trim() !== '');
+                
+                const lineX = 120; // Oś termometru
+                const startY = 300;
+                const stepY = 80;
+
+                // Rysowanie pionowej linii trasy
+                targetCtx.strokeStyle = colorTextTeal;
+                targetCtx.lineWidth = 6;
+                targetCtx.beginPath();
+                targetCtx.moveTo(lineX, startY);
+                if (stops.length > 1) {
+                    targetCtx.lineTo(lineX, startY + (stops.length - 1) * stepY);
+                }
+                targetCtx.stroke();
+
+                // Rysowanie kulek i nazw przystanków
+                targetCtx.textAlign = 'left';
+                for (let i = 0; i < stops.length; i++) {
+                    const y = startY + i * stepY;
+                    
+                    // Kulka/kwadracik na osi
+                    targetCtx.fillStyle = colorTextTeal;
+                    targetCtx.beginPath();
+                    if (i === 0) {
+                        // Aktualny przystanek wyróżniony większym kwadratem/kółkiem
+                        targetCtx.arc(lineX, y, 12, 0, Math.PI * 2);
+                        targetCtx.fill();
+                        targetCtx.font = '900 45px "Inter", sans-serif'; // Bold dla obecnego
+                    } else {
+                        targetCtx.arc(lineX, y, 8, 0, Math.PI * 2);
+                        targetCtx.fill();
+                        targetCtx.font = '600 40px "Inter", sans-serif'; // Zwykły dla kolejnych
+                    }
+                    
+                    targetCtx.fillText(stops[i], lineX + 40, y);
+                }
+
+                // 4. Godzina (Duża, z prawej strony)
+                targetCtx.fillStyle = colorTextTeal;
+                targetCtx.textAlign = 'right';
+                targetCtx.font = '900 160px "Inter", sans-serif';
+                targetCtx.fillText(document.getElementById('lcdTime').value, width - 100, 400);
+
+                // Logo/Herb w prawym dolnym rogu głównego ekranu
+                const activeCrest = customCrestImage || defaultCrestImage; 
+                if (activeCrest) {
+                    targetCtx.drawImage(activeCrest, width - 250, height - 280, 160, 195);
+                }
+
+                // 5. Dolny pasek (Ticker)
+                targetCtx.fillStyle = colorPink;
+                targetCtx.fillRect(0, height - 60, width, 60);
+                
+                targetCtx.fillStyle = '#ffffff';
+                targetCtx.textAlign = 'center';
+                targetCtx.font = 'bold 35px "Inter", sans-serif';
+                targetCtx.fillText(document.getElementById('lcdTicker').value, width / 2, height - 28);
             }
 
             targetCtx.restore();
@@ -697,7 +843,6 @@
             drawToContext(modalCtx);
         }
 
-        // Eventy inputów
         const inputs = document.querySelectorAll('input, textarea');
         inputs.forEach(input => {
             if(input.type !== 'file') {
@@ -720,10 +865,13 @@
                     fileName = `kolej_${safeDest}_8K.png`;
                 } else if (currentSubMode === 'dir') {
                     const safeLine = document.getElementById('lineInput').value.replace(/[^a-zA-Z0-9]/g, '');
-                    fileName = `autobus_linia_${safeLine}_8K.png`;
-                } else {
+                    fileName = `autobus_zewn_${safeLine}_8K.png`;
+                } else if (currentSubMode === 'sip') {
                     const safeStop = document.getElementById('sipStopName').value.replace(/[^a-zA-Z0-9]/g, '_');
                     fileName = `przystanek_${safeStop}_8K.png`;
+                } else if (currentSubMode === 'lcd') {
+                    const safeLcd = document.getElementById('lcdLine').value.replace(/[^a-zA-Z0-9]/g, '');
+                    fileName = `autobus_wewn_LCD_${safeLcd}_8K.png`;
                 }
                 
                 link.download = fileName;
@@ -738,7 +886,6 @@
         // --- INICJALIZACJA APLIKACJI ---
         setMainMode('bus'); 
         
-        // Ładowanie domyślnego herbu Gorzowa
         const initDefaultCrest = new Image();
         initDefaultCrest.onload = function() {
             defaultCrestImage = initDefaultCrest;
